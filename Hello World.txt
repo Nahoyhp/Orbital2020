@@ -1,2 +1,6 @@
 Hello World
+<<<<<<< Updated upstream
 Hello Heng JeeJoo, WeiJian, Dan
+=======
+Hello WeiJian and Dan
+>>>>>>> Stashed changes
