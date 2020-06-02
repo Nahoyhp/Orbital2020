@@ -1,0 +1,68 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js install
+
+PATH: 
+  C:\Python27\;C:\Python27\Scripts;C:\Python38\Scripts\;C:\Python38\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\ProgramData\chocolatey\bin;C:\Program Files\nodejs\;C:\Program Files\Java\jdk1.8.0_211\bin;C:\Users\Phyo Han\AppData\Roaming\npm;C:\Program Files\Java\jdk1.8.0_211\bin;C:\Users\Phyo Han\AppData\Local\Android\Sdk\platform-tools;C:\Gradle\gradle-6.4.1\bin;C:\Users\Phyo Han\AppData\Local\Android\Sdk\platforms;C:\Program Files (x86)\Yarn\bin\;C:\Users\Phyo Han\AppData\Local\Microsoft\WindowsApps;C:\Users\Phyo Han\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Phyo Han\AppData\Local\GitHubDesktop\bin;C:\Users\Phyo Han\AppData\Roaming\npm;C:\Users\Phyo Han\AppData\Local\Android\Sdk\platform-tools;C:\Users\Phyo Han\AppData\Local\Yarn\bin
+
+Yarn version: 
+  1.22.4
+
+Node version: 
+  14.2.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, unlink 'C:\Users\Phyo Han\Documents\GitHub\Orbital2020\Taranor2\node_modules\@babel\helper-create-class-features-plugin\lib'
+
+npm manifest: 
+  {
+    "name": "Taranor2",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+      "android": "react-native run-android",
+      "ios": "react-native run-ios",
+      "start": "react-native start",
+      "test": "jest",
+      "lint": "eslint ."
+    },
+    "dependencies": {
+      "@react-native-community/masked-view": "^0.1.10",
+      "@react-native-firebase/app": "^7.1.4",
+      "@react-native-firebase/auth": "^7.1.0",
+      "@react-native-firebase/firestore": "^7.1.2",
+      "@react-navigation/bottom-tabs": "^5.5.0",
+      "@react-navigation/native": "^5.4.3",
+      "@react-navigation/stack": "^5.4.0",
+      "firebase": "^7.14.6",
+      "react": "16.11.0",
+      "react-dom": "^16.13.1",
+      "react-native": "0.62.2",
+      "react-native-gesture-handler": "^1.6.1",
+      "react-native-reanimated": "^1.9.0",
+      "react-native-safe-area-context": "^2.0.0",
+      "react-native-screens": "^2.8.0",
+      "react-native-web": "^0.12.2"
+    },
+    "devDependencies": {
+      "@babel/core": "7.9.6",
+      "@babel/runtime": "7.9.6",
+      "@react-native-community/eslint-config": "0.0.5",
+      "babel-jest": "24.9.0",
+      "eslint": "6.8.0",
+      "jest": "24.9.0",
+      "metro-react-native-babel-preset": "0.58.0",
+      "react-test-renderer": "16.11.0"
+    },
+    "jest": {
+      "preset": "react-native"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
