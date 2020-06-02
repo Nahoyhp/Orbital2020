@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "361539483136",
+    "firebase_url": "https://taranorv2.firebaseio.com",
+    "project_id": "taranorv2",
+    "storage_bucket": "taranorv2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:361539483136:android:e6a1f4b781022e5d0a8ae5",
+        "android_client_info": {
+          "package_name": "com.orbital.taranor2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "361539483136-iu4aj5vjgfd6nv2tamihjns0v8n34pmb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjMUNKGtRYSL8DucNWliB2QSVic35k2tQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "361539483136-iu4aj5vjgfd6nv2tamihjns0v8n34pmb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
