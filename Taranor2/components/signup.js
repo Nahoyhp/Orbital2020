@@ -4,7 +4,12 @@ import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 //import firebase from '../database/config';
 import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
 import defaultStyle from './defaultText';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { functions } from 'firebase';
+
+
 
 export default class Signup extends Component {
   
@@ -14,6 +19,7 @@ export default class Signup extends Component {
       displayName: '',
       email: '', 
       password: '',
+      role: null,
       isLoading: false
     }
   }
@@ -24,22 +30,49 @@ export default class Signup extends Component {
     this.setState(state);
   }
 
-  registerUser = () => {
-    if(this.state.email === '' && this.state.password === '') {
+  registerUser = (role) => {
+    if(this.state.email == '' || this.state.password == '' || this.state.displayName == '') {
       Alert.alert('Enter details to signup!')
     } else {
       this.setState({
         isLoading: true,
       })
-      /*firebase
-      .auth()*/
+
       auth()
       .createUserWithEmailAndPassword(this.state.email, this.state.password)
-      .then((res) => {
+      .then( (res) => {
         res.user.updateProfile({
           displayName: this.state.displayName
         })
         console.log('User registered successfully!')
+
+        this.state.role == 'Teacher' ?
+          firestore().collection('teachers')
+          .doc(res.user.uid)
+          .set({
+            name: this.state.displayName,
+            uid: res.user.uid,
+            email: this.state.email,
+            password: this.state.password,
+            role:this.state.role
+          })
+          .then(
+            console.log("Teacher Data succesfully added to Firestore")
+          ).catch(err =>console.error(err)) :
+
+          firestore().collection('students')
+          .doc(res.user.uid)
+          .set({
+            name: this.state.displayName,
+            uid: res.user.uid,
+            email: this.state.email,
+            password: this.state.password,
+            role:this.state.role
+          })
+          .then(
+            console.log("Student Data succesfully added to Firestore")
+          ).catch(err =>console.error(err))
+
         this.setState({
           isLoading: false,
           displayName: '',
@@ -48,7 +81,7 @@ export default class Signup extends Component {
         })
         this.props.navigation.navigate('Login')
       })
-      .catch(error => this.setState({ errorMessage: error.message }))      
+      .catch(error => this.setState({ errorMessage: error.message }))   
     }
   }
 
@@ -60,10 +93,10 @@ export default class Signup extends Component {
         </View>
       )
     }    
-    return (
+    return ( 
       <View style={styles.container}>  
         <Text style = {styles.subheader}>
-          Sign Up for Taranor        
+          Sign Up for Taranor!      
         </Text>
         <Text style = {defaultStyle.default}>
         (Enter your Name, Email and Set a Password)        
@@ -88,11 +121,27 @@ export default class Signup extends Component {
           onChangeText={(val) => this.updateInputVal(val, 'password')}
           maxLength={15}
           secureTextEntry={true}
-        />   
+        />
+        <Text>Role</Text>
+
+        <View style = {{elevation:10}}>
+          <DropDownPicker
+            items={[{label:'Student',value:'Student'},{label:'Teacher',value: 'Teacher'},]}
+            defaultValue={this.state.role}
+            placeholder = "Select your role"
+            containerStyle = {{height:30,marginTop:10,marginBottom:85}}
+            style = {{backgroundColor:'#ffffff'}}
+            dropDownStyle = {{backgroundColor:'#ffffff'}}
+            onChangeItem={item => this.setState({
+              role : item.value  
+            })}
+          />
+        </View>
+           
         <Button
           color="#3740FE"
           title="Signup"
-          onPress={() => this.registerUser()}
+          onPress={() => {this.registerUser(this.state.role)}}
         />
 
         <Text 
@@ -121,8 +170,9 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    padding: 35,
-    backgroundColor: '#fff'
+    padding: 25,
+    backgroundColor: '#fff',
+    elevation:5
   },
   inputStyle: {
     width: '100%',
