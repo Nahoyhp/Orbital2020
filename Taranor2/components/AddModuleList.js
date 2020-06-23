@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { View, TextInput, StyleSheet, Button ,Text } from 'react-native';
 import BlueButton from './BlueButton';
-//import firebaseDb from '../database/config';
-import firestore from '@react-native-firebase/firestore'
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth'
 
 
 const ref = firestore().collection('modules');
@@ -21,27 +21,31 @@ class addModuleList extends Component{
     handleUpdateCode = (code) => this.setState({code});
 
     handleDescription = (description) =>this.setState({description});
-    
+
     handleCreateModules = () => 
         ref
-        .add({
+        .doc(this.state.code)
+        .set({
             code: this.state.code,
             name: this.state.name,
-            description: this.state.description
+            description: this.state.description,
+            createdBy: auth().currentUser.displayName,
+            createdByID: auth().currentUser.uid,
+            timeCreated: firestore.FieldValue.serverTimestamp(),
         }).then(() => this.setState({
             code: '',
             name: '',
             description:'',
             moduleCreated: true
         })).catch(err =>console.error(err))
-    
+
 
     render(){
         const { name, code, description, moduleCreated } = this.state;
 
         return (
             <View style = {styles.container}>
-                <Text style = {styles.Text}>HELLO,plz put in your module details and torture the students :D</Text> 
+                <Text style = {styles.Text}>Please key in releveant details</Text> 
                 <TextInput style = {styles.inputStyle}
                     placeholder = "Code" 
                     value = {code}
@@ -57,11 +61,13 @@ class addModuleList extends Component{
                     value = {description}
                     onChangeText={this.handleDescription} 
                 />
-                <BlueButton style = {styles.button} onPress ={() => {
-                    this.handleCreateModules()
+                <BlueButton 
+                    title = "Submit"
+                    style = {styles.button} 
+                    onPress ={() => {
+                        this.handleCreateModules()
                   }
                 }>
-                    Submit
                 </BlueButton>
 
                 { moduleCreated ? (

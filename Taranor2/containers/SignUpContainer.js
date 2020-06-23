@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button , View, Image, TextInput, Text, StyleSheet } from 'react-native'
-import BlueButton from '../components/BlueButton';
+//import BlueButton from '../components/BlueButton';
 //import firebaseDb from '../database/config'
 import firestore from '@react-native-firebase/firestore'
 

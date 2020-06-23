@@ -1,15 +1,9 @@
-// components/signup.js
-
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
-//import firebase from '../database/config';
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import defaultStyle from './defaultText';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { functions } from 'firebase';
-
-
 
 export default class Signup extends Component {
   
@@ -43,7 +37,7 @@ export default class Signup extends Component {
       .then( (res) => {
         res.user.updateProfile({
           displayName: this.state.displayName
-        })
+        })  
         console.log('User registered successfully!')
 
         this.state.role == 'Teacher' ?
@@ -54,7 +48,8 @@ export default class Signup extends Component {
             uid: res.user.uid,
             email: this.state.email,
             password: this.state.password,
-            role:this.state.role
+            role:this.state.role,
+            moduleInvolved: [],
           })
           .then(
             console.log("Teacher Data succesfully added to Firestore")
@@ -67,7 +62,8 @@ export default class Signup extends Component {
             uid: res.user.uid,
             email: this.state.email,
             password: this.state.password,
-            role:this.state.role
+            role:this.state.role,
+            moduleInvolved: [],
           })
           .then(
             console.log("Student Data succesfully added to Firestore")
@@ -104,7 +100,7 @@ export default class Signup extends Component {
 
         <TextInput
           style={styles.inputStyle}
-          placeholder="Name"
+          placeholder="Display Name"
           value={this.state.displayName}
           onChangeText={(val) => this.updateInputVal(val, 'displayName')}
         />      
@@ -124,14 +120,14 @@ export default class Signup extends Component {
         />
         <Text>Role</Text>
 
-        <View style = {{elevation:10}}>
+        <View>
           <DropDownPicker
             items={[{label:'Student',value:'Student'},{label:'Teacher',value: 'Teacher'},]}
             defaultValue={this.state.role}
             placeholder = "Select your role"
-            containerStyle = {{height:30,marginTop:10,marginBottom:85}}
-            style = {{backgroundColor:'#ffffff'}}
-            dropDownStyle = {{backgroundColor:'#ffffff'}}
+            style = {{backgroundColor:'#ffffff', elevation: 10}}
+            containerStyle = {{height:30,marginTop:10,marginBottom:35,}}
+            dropDownStyle = {{backgroundColor:'#ffffff', elevation: 10}}
             onChangeItem={item => this.setState({
               role : item.value  
             })}
@@ -140,7 +136,7 @@ export default class Signup extends Component {
            
         <Button
           color="#3740FE"
-          title="Signup"
+          title="Sign Up"
           onPress={() => {this.registerUser(this.state.role)}}
         />
 

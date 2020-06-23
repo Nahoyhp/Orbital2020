@@ -88,7 +88,12 @@ export default class Login extends Component {
           color="#3740FE"
           title="Signin"
           onPress={() => this.userLogin()}
-        />   
+        />
+
+        <Button
+          title = "Phyo Han Testing Ground"
+          onPress = {() => this.props.navigation.navigate('Test')}
+        />
 
         <Text 
           style={styles.loginText}

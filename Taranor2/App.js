@@ -8,8 +8,10 @@ import { createStackNavigator} from '@react-navigation/stack';
 import AddModules from './components/AddModuleList';
 import SignUp from './components/signup';
 import Login from './components/login';
-import Dashboard from './components/dashboard';
-//const Tab = createBottomTabNavigator();
+import DashBoard from './containers/DashBoard';
+import CreateEvent from './containers/CreateEvent';
+
+
 
 const Stack = createStackNavigator();
 
@@ -45,7 +47,7 @@ function StackFn(){
       
       <Stack.Screen 
         name = "Dashboard" 
-        component = {Dashboard} 
+        component = {DashBoard} 
         options = {
           {title: 'Dashboard'},
           {headerLeft:null}
@@ -60,6 +62,25 @@ function StackFn(){
           {headerLeft:null}
         }
       />
+
+      <Stack.Screen 
+        name = "Test" 
+        component = {DashBoard} 
+        options = {
+          {title: 'Testing'},
+          {headerLeft:null}
+        }
+      />
+
+      <Stack.Screen 
+        name = "CreateEvent" 
+        component = {CreateEvent} 
+        options = {
+          {title: 'CreateEvent'},
+          {headerLeft:null}
+        }
+      />
+
     </Stack.Navigator>
   )
 }
