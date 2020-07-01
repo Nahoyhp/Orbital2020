@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, SafeAreaView, Text, View,Alert } from 'react-native';
+import {SafeAreaView} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator} from '@react-navigation/stack';
 import AddModules from './components/AddModuleList';
@@ -26,11 +26,11 @@ function StackFn(){
         headerTintColor:'#fff',
         headerTitleStyle:{
           fontWeight: 'bold',
-        },
+        }
       }}>
       <Stack.Screen 
         name = "SignUp" 
-        component = {SignUp} 
+        component = {SignUp}  
         options = {
           {title: 'SignUp'},
           {headerLeft:null}
@@ -62,15 +62,6 @@ function StackFn(){
       />
 
       <Stack.Screen 
-        name = "Test" 
-        component = {DashBoard} 
-        options = {
-          {title: 'Testing'},
-          {headerLeft:null}
-        }
-      />
-
-      <Stack.Screen 
         name = "CreateEvent" 
         component = {CreateEvent} 
         options = {
@@ -85,17 +76,10 @@ function StackFn(){
 
 export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
         <NavigationContainer>
           <StackFn/>
         </NavigationContainer>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-});
