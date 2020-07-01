@@ -40,34 +40,16 @@ export default class Signup extends Component {
         })  
         console.log('User registered successfully!')
 
-        this.state.role == 'Teacher' ?
-          firestore().collection('teachers')
-          .doc(res.user.uid)
-          .set({
-            name: this.state.displayName,
-            uid: res.user.uid,
-            email: this.state.email,
-            password: this.state.password,
-            role:this.state.role,
-            moduleInvolved: [],
-          })
-          .then(
-            console.log("Teacher Data succesfully added to Firestore")
-          ).catch(err =>console.error(err)) :
-
-          firestore().collection('students')
-          .doc(res.user.uid)
-          .set({
-            name: this.state.displayName,
-            uid: res.user.uid,
-            email: this.state.email,
-            password: this.state.password,
-            role:this.state.role,
-            moduleInvolved: [],
-          })
-          .then(
-            console.log("Student Data succesfully added to Firestore")
-          ).catch(err =>console.error(err))
+        firestore().collection('users').doc(res.user.uid)
+        .set({
+          name: this.state.displayName,
+          uid: res.user.uid,
+          email: this.state.email,
+          password: this.state.password,
+          role:this.state.role,
+          moduleInvolved: [],
+        })
+        .catch(err =>console.error(err))
 
         this.setState({
           isLoading: false,
@@ -77,7 +59,14 @@ export default class Signup extends Component {
         })
         this.props.navigation.navigate('Login')
       })
-      .catch(error => this.setState({ errorMessage: error.message }))   
+      .catch(error => {
+        if (error.code === 'auth/email-already-in-use') {
+          Alert.alert('Error', 'That email address is already in use!');
+        } else if (error.code === 'auth/invalid-email') {
+          Alert.alert('Error', 'That email address is invalid!');
+        }
+        this.setState({isLoading: false})
+      }) 
     }
   }
 
@@ -103,12 +92,19 @@ export default class Signup extends Component {
           placeholder="Display Name"
           value={this.state.displayName}
           onChangeText={(val) => this.updateInputVal(val, 'displayName')}
+          returnKeyType = "next"
+          onSubmitEditing = {() => this.emailInput.focus()}
+          blurOnSubmit = {false}
         />      
         <TextInput
           style={styles.inputStyle}
           placeholder="Email"
           value={this.state.email}
           onChangeText={(val) => this.updateInputVal(val, 'email')}
+          ref = {(input) => {this.emailInput = input}}
+          returnKeyType = "next"
+          onSubmitEditing = {() => this.passwordInput.focus()}
+          blurOnSubmit = {false}
         />
         <TextInput
           style={styles.inputStyle}
@@ -117,14 +113,19 @@ export default class Signup extends Component {
           onChangeText={(val) => this.updateInputVal(val, 'password')}
           maxLength={15}
           secureTextEntry={true}
+          ref = {(input) => {this.passwordInput = input}}
+          returnKeyType = "next"
+          onSubmitEditing = {() => this.roleInput.focus()}
+          blurOnSubmit = {false}
         />
         <Text>Role</Text>
 
         <View>
           <DropDownPicker
-            items={[{label:'Student',value:'Student'},{label:'Teacher',value: 'Teacher'},]}
+            items={[{label:'Student',value:'Student', key: 'Students'},{label:'Teacher',value: 'Teacher', key: 'Teacher'},]}
             defaultValue={this.state.role}
             placeholder = "Select your role"
+            ref = {(input) => {this.roleInput = input}}
             style = {{backgroundColor:'#ffffff', elevation: 10}}
             containerStyle = {{height:30,marginTop:10,marginBottom:35,}}
             dropDownStyle = {{backgroundColor:'#ffffff', elevation: 10}}

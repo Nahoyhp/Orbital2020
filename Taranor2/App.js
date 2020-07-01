@@ -2,14 +2,12 @@ import * as React from 'react';
 import { StyleSheet, SafeAreaView, Text, View,Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator} from '@react-navigation/stack';
-//import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-//import SignUpContainer from './containers/SignUpContainer';
-//import UserListContainer from './containers/UserListContainer';
 import AddModules from './components/AddModuleList';
 import SignUp from './components/signup';
 import Login from './components/login';
 import DashBoard from './containers/DashBoard';
 import CreateEvent from './containers/CreateEvent';
+
 
 
 
@@ -55,10 +53,10 @@ function StackFn(){
       />
 
       <Stack.Screen 
-        name = "AddModule" 
+        name = "AddModules" 
         component = {AddModules} 
         options = {
-          {title: 'AddModule'},
+          {title: 'AddModules'},
           {headerLeft:null}
         }
       />

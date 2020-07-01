@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, TextInput, StyleSheet, Button ,Text } from 'react-native';
+import { View, TextInput, StyleSheet, Button ,Text, Alert } from 'react-native';
 import BlueButton from './BlueButton';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth'
@@ -22,7 +22,21 @@ class addModuleList extends Component{
 
     handleDescription = (description) =>this.setState({description});
 
-    handleCreateModules = () => 
+    handleCreateModules = () => {
+        if (this.state.code == '' || this.state.name == '') {
+            Alert.alert("Error", "Course code and name is mandatory")
+            return
+        }
+
+        var newModuleList = []
+        ref.doc("AllModules").get()
+        .then(docSnapShot => {
+            newModuleList = docSnapShot.data()['allModules']
+            newModuleList.push(this.state.code)
+            console.log(newModuleList)
+            ref.doc('AllModules').update({'allModules': newModuleList})
+        }).catch(err => console.log("Error @ All Modules"))
+
         ref
         .doc(this.state.code)
         .set({
@@ -38,6 +52,7 @@ class addModuleList extends Component{
             description:'',
             moduleCreated: true
         })).catch(err =>console.error(err))
+    }
 
 
     render(){
@@ -46,11 +61,13 @@ class addModuleList extends Component{
         return (
             <View style = {styles.container}>
                 <Text style = {styles.Text}>Please key in releveant details</Text> 
+                
                 <TextInput style = {styles.inputStyle}
                     placeholder = "Code" 
                     value = {code}
                     onChangeText={this.handleUpdateCode} 
                 />
+
                 <TextInput style = {styles.inputStyle}
                     placeholder = "Name" 
                     value = {name}
@@ -61,24 +78,25 @@ class addModuleList extends Component{
                     value = {description}
                     onChangeText={this.handleDescription} 
                 />
-                <BlueButton 
-                    title = "Submit"
-                    style = {styles.button} 
-                    onPress ={() => {
-                        this.handleCreateModules()
-                  }
-                }>
-                </BlueButton>
-
-                { moduleCreated ? (
-                    <Text style = {styles.text}> Module Created! </Text> 
-                ): null }
+                <View style = {{marginTop: 10, marginBottom: 10}}>
+                    <Button
+                        color="#3740FE"
+                        title="Submit"
+                        style = {{paddingBottom: 10, marginBottom: 10}}
+                        onPress ={() => {this.handleCreateModules()} }
+                    />
+                </View>
 
                 <Button
                     color="#3740FE"
                     title="Back to dashboard"
                     onPress={() => this.props.navigation.navigate('Dashboard')}
-        />
+                />
+
+                { moduleCreated ? (
+                    Alert.alert("", "Module Created")
+                ): null }
+
             </View>           
         )
     }
@@ -116,6 +134,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff'
+  },
+  button: {
+    color: 'blue'
   }
 })
 

@@ -24,28 +24,30 @@ export default class Login extends Component {
     this.setState(state);
   }
 
-  userLogin = () => {
+  userLogin = async () => {
     if(this.state.email === '' && this.state.password === '') {
-      Alert.alert('Enter details to signin!')
+      Alert.alert('Enter details to Sign In!')
     } else {
       this.setState({
         isLoading: true,
       })
-      /*firebase
-      .auth()*/
-      auth()
-      .signInWithEmailAndPassword(this.state.email, this.state.password)
-      .then((res) => {
-        console.log(res)
-        console.log('User logged-in successfully!')
+
+      try {
+        let response = await auth().signInWithEmailAndPassword(this.state.email, this.state.password)
+        if (response && response.user) {
+          this.setState({isLoading: false})
+          this.props.navigation.navigate('Dashboard')
+        }
+  
+      }catch (e) {
+        console.log(e)
         this.setState({
           isLoading: false,
           email: '', 
           password: ''
         })
-        this.props.navigation.navigate('Dashboard')
-      })
-      .catch(error => this.setState({ errorMessage: error.message }))
+        Alert.alert("Login Failed", "Username or password is wrong. Please Try again")
+      }
     }
   }
 
@@ -73,6 +75,9 @@ export default class Login extends Component {
           placeholder="Email"
           value={this.state.email}
           onChangeText={(val) => this.updateInputVal(val, 'email')}
+          returnKeyType = "next"
+          onSubmitEditing = {() => this.secondTextInput.focus()}
+          blurOnSubmit = {false}
         />
 
         <TextInput
@@ -82,6 +87,8 @@ export default class Login extends Component {
           onChangeText={(val) => this.updateInputVal(val, 'password')}
           maxLength={15}
           secureTextEntry={true}
+          ref = {(input) => {this.secondTextInput = input}}
+          onSubmitEditing = {() => this.userLogin()}
         />   
 
         <Button
@@ -89,11 +96,11 @@ export default class Login extends Component {
           title="Signin"
           onPress={() => this.userLogin()}
         />
-
-        <Button
+        {/*        <Button
           title = "Phyo Han Testing Ground"
           onPress = {() => this.props.navigation.navigate('Test')}
-        />
+        />*/}
+
 
         <Text 
           style={styles.loginText}
