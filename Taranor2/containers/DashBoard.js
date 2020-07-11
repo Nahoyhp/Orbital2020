@@ -1,11 +1,26 @@
 import React, { Component, useState} from 'react';
-import { Dimensions, StyleSheet, View, SafeAreaView, TextInput, Text, FlatList, Alert, ActivityIndicator} from 'react-native';
-import BlueButton from "../components/BlueButton";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  FlatList,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore'
 import auth from '@react-native-firebase/auth'
 import TimeTableView, { genTimeBlock } from 'react-native-timetable';
-import database from '../API/firebaseAPI'
-import { ScreenStackHeaderBackButtonImage } from 'react-native-screens';
+import database from '../API/firebaseAPI';
+import Fontisto from 'react-native-vector-icons/Fontisto';
+import Octicons from 'react-native-vector-icons/Octicons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Button } from 'react-native-elements';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const events_data = [
     {
@@ -64,21 +79,19 @@ const events_data = [
     },
   ];
 
-const modulesCollection = firestore().collection('modules');
-
 const dayArr = ['MON', 'TUE','WED', 'THU','FRI', 'SAT','SUN']
 
 const colorArr = ["#AC96B6",'#048A81',"#54C6EB","#6FA8D6","#8A89C0","#8A89C0"]
+
+const dataTitle = ['module', 'title','createdBy', 'date', 'startTime', 'endTime', 'extra_description']
 
 function compare(a,b){
   var aIndex = dayArr.indexOf(a["day"])
   var bIndex = dayArr.indexOf(b['day'])
   var result = aIndex - bIndex
-  //console.log(a['day'],b['day'] )
-  //console.log(aIndex, bIndex)
 
   if (result != 0) {return result}
-  else { Date(a['date']).getHours() - Date(b['date']).getHours() }
+  else { return Date(a['date']).getHours() - Date(b['date']).getHours() }
 }
 
 export default class Dashboard extends Component {
@@ -93,8 +106,20 @@ export default class Dashboard extends Component {
       moduleSubscribed : [],
       userRole: '',
       today: new Date(),
-      moduleToSubscribe: "",        
+      moduleToSubscribe: "",
+      loading: true,
+      showModal: false,
+      showDropDown: false,
+      modalModule: {}        
     }
+  }
+
+  onModal = ({data}) => {
+    this.setState({showModal : true, modalModule: data})
+  }
+
+  offModal = () => {
+    this.setState({showModal : false})
   }
 
   handleUserInput = (moduleToSubscribe) => {
@@ -113,7 +138,6 @@ export default class Dashboard extends Component {
 
   getStudentInfo = async () => {
     var temp = await database.getModuleSubscribed()
-    //console.log(temp)
     this.setState({moduleSubscribed : temp})
   }
 
@@ -125,11 +149,9 @@ export default class Dashboard extends Component {
       this.getStudentInfo()
       var temp = await database.getEvents()
       temp.sort(compare)
-      await this.setState({eventList : temp})
+      this.setState({eventList : temp, loading: false})
     }
   }
-
-
 
   onEventPress = (evt) => {
     Alert.alert("onEventPress", JSON.stringify(evt));
@@ -156,7 +178,6 @@ export default class Dashboard extends Component {
       this.setState({moduleToSubscribe: ''})
       Alert.alert("Error", errorMessage)
     } else {
-      console.log("Subscribe")
       temp = [...this.state.moduleSubscribed, this.state.moduleToSubscribe]
       newEvent = await database.subscribeNewModule(this.state.moduleToSubscribe)
       studentFirebase.update({moduleInvolved: temp})
@@ -165,9 +186,7 @@ export default class Dashboard extends Component {
         moduleSubscribed: temp,
         eventList: [...this.state.eventList, ...newEvent].sort(compare)
       })
-      console.log("Done")
       Alert.alert("Successful", "You are now subscribed to " + this.state.moduleToSubscribe)
-      console.log(this.state.eventList)
     }
   }
 
@@ -175,13 +194,8 @@ export default class Dashboard extends Component {
     this.timetableRef = ref;
   };
 
-  testing() {
-    return (<View><Text>Hello World</Text></View>)
-  }
-
   customStyle(moduleName) {
     var color = colorArr[this.state.moduleSubscribed.indexOf(moduleName)]
-    console.log(color)
     return {
       backgroundColor: color,
       margin: 1,
@@ -190,101 +204,309 @@ export default class Dashboard extends Component {
     }
   }
 
-
-  render() {
-    if (this.state.moduleNameList.length == 0 || this.state.eventList.length == 0){
-      return (
-        <View style = {{flex: 1, justifyContent: 'center'}}>
-          <ActivityIndicator size="large" color="#0000ff" />
+  modalDetail = ({title, content}) => {
+    return (
+      <View style = {{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
+        <Text style = {modalStyle.title}> {title} </Text>
+        <View style = {modalStyle.dataContainer}>
+          <Text>{content}</Text>
         </View>
-      )
-    } else {
-      return (
-        <SafeAreaView style={{flex: 1}}>
-          <SafeAreaView style = {{flexDirection: "row"}}>
+      </View>
+    )
+  }
+
+  modalNotes = ({title, content}) => {
+    return (
+      <View style = {{flexDirection: "column"}}>
+        <Text> {title} </Text>
+        <View style = {{borderWidth: 1, borderRadius: 5}}>
+          <Text style = {{padding: 5, marginBottom: 10}}>{content}</Text>
+        </View>
+      </View>
+    )
+  }
+
+  modalContent = () => {
+    var modalModule = this.state.modalModule
+    return (
+    <Modal
+    style = {{flex: 1}}
+    visible = {this.state.showModal}
+    onRequestClose = {this.offModal}
+    animationType = 'fade'
+    transparent = {true}
+    >
+      <View style = {{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+        <TouchableOpacity onPressOut = {() => this.offModal()}>
+          <View style ={modalStyle.modalContainer}>
+            <View style = {{alignItems: 'flex-end', paddingLeft: 5}}>
+              <Fontisto 
+              name = "close-a"
+              color = {'tomato'}
+              size = {15}
+              />
+            </View>
+            {this.modalDetail({title: 'Module :', content: modalModule.module})}
+            {this.modalDetail({title: 'Time :', content: modalModule.day + " " + modalModule.startTime + " - " + modalModule.endTime}) }
+            {this.modalDetail({title: 'CreatedBy :', content: modalModule.createdBy})}
+            {modalModule.location != '' && this.modalDetail({title: 'Location:', content: modalModule.location})}
+            {modalModule.extra_description != '' && this.modalNotes({title: 'Notes :', content: modalModule.extra_description})}
+            <View style = {{flex: 1, justifyContent: 'flex-end', flexDirection: 'row'}}>
+              <TouchableOpacity onPress = {null}>
+                <Button
+                  title ="Modify"
+                  type = "solid"
+                  containerStyle = {{marginRight: 5, marginTop: 10}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress = {null}>
+                <Button
+                  title ="Unsubscribe"
+                  type = "solid"
+                  containerStyle = {{marginRight: 5, marginTop: 10}}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+    )
+  }
+
+  searchBar = () => {
+    return (
+      <SafeAreaView style = {{flexDirection: "row", alignItems: 'center'}}>
             <TextInput 
-              style = {myStyle.input}
+              style = {functionBar.input}
               placeholder = "Key in Modules to Search"
               value = {this.state.moduleToSubscribe}
               onChangeText = {this.handleUserInput}
+              onFocus = {() => this.setState({showDropDown: true})}
+              //showSoftInputOnFocus = {false}
               />
-            <View style = {myStyle.buttons}>
-              <BlueButton
-              style = {myStyle.AddMoudle}
-              title = "1"
+              <Button
+              type = 'clear'
+              containerStyle = {functionBar.buttonContainer}
+              icon = {
+                <Fontisto
+                name="search"
+                color={'white'}
+                size={20}
+                />
+              }
               onPress = {this.subscribeNewModule}
               />
-              <BlueButton
-              style = {myStyle.SearchButton}
-              title = "2"
-              onPress = {() => this.toggleView()}
+              <Button
+              type = 'clear'
+              containerStyle = {functionBar.buttonContainer}
+              icon = {
+                <Octicons
+                name="sync"
+                color={'white'}
+                size={20}
+                />
+              }
+              onPress = {this.toggleView}
               />
-              <BlueButton
-              style = {myStyle.AddMoudle}
-              title = "3"
-              onPress = {() => this.props.navigation.navigate('AddModules')}
-              />
+        </SafeAreaView>
+    )
+  }
 
-              <BlueButton
-              style = {myStyle.AddMoudle}
-              title = "4"
-              onPress = {() => this.props.navigation.navigate('CreateEvent')}
-              />
+  dropDownContent = () => {
+    return (
+      <Modal
+      style = {{flex: 1}}
+      visible = {this.state.showDropDown}
+      onRequestClose = {() => this.setState({showDropDown: false})}
+      animationType = 'fade'
+      transparent = {true}
+      >
+        {this.searchBar()}
+        <TouchableOpacity onPressOut = {() => this.setState({showDropDown: false})}>
+          <View style = {{backgroundColor: 'rgba(0,0,0,0.5)', height: Dimensions.get('window').height}}>
+            <FlatList
+              data = {database.state.moduleNameList.filter(item => this.matchInput(item)).slice(0,5)}
+              keyExtractor = {(item, index) => {
+                  return JSON.stringify(index)
+              }}
+              renderItem = {({item}) => {
+                  return (
+                  <View style = {{flex: 1, flexDirection: 'row'}}>
+                      <View style = {flatListItemStyle.container}>
+                          <TouchableOpacity onPress = {() => {this.pressFlatListItem(item)}}>
+                              <Text style>{item}</Text>
+                          </TouchableOpacity>
+                      </View>
+                      <View style = {{flex: 2, marginLeft: 32}}></View>
+                  </View>
+                  )
+              }}
+            />
+          </View>
+        </TouchableOpacity> 
+      </Modal>
+    )
+  }
 
-            </View>
-          </SafeAreaView>
-          {!this.state.listView ? (
-            <View style={styles.container}>
-              <TimeTableView
-                scrollViewRef={events_data}
-                events={events_data}
-                pivotTime={8}
-                pivotEndTime={20}
-                pivotDate={this.pivotDate}
-                numberOfDays={this.numOfDays}
-                onEventPress={this.onEventPress}
-                headerStyle={styles.headerStyle}
-                formatDateHeader="dddd"
-                locale="en"
-              />
-            </View>) : <View style={styles.container}>
+  pressFlatListItem = (item) => {
+    this.setState({moduleToSubscribe : item})
+  }
+
+  matchInput = (item) => {
+      return item.includes(this.state.moduleToSubscribe)
+  }
+
+  timetableRender = () => {
+    return (
+    <View style={styles.container}>
+      <View>
+        <View>
+          <Octicons
+            name = 'arrow-left'
+            color = '#F8F8F8'
+            fontSize = {40}
+          />
+        </View>
+        
+        <View>
+          <Octicons
+            name = 'arrow-right'
+            color = '#F8F8F8'
+            fontSize = {40}
+          />
+        </View>
+      </View>
+      <ScrollView>
+        <TimeTableView
+          scrollViewRef={events_data}
+          events={events_data}
+          pivotTime={8}
+          pivotEndTime={20}
+          pivotDate={this.pivotDate}
+          numberOfDays={this.numOfDays}
+          onEventPress={this.onEventPress}
+          headerStyle={styles.headerStyle}
+          formatDateHeader="dddd"
+          locale="en"
+        />
+      </ScrollView>
+    </View>)
+  }
+
+  content = () => {
+    return (
+      <SafeAreaView style={{flex: 1,}}>
+        { this.state.showModal && this.modalContent() }
+        { this.searchBar()}
+        {!this.state.listView ? this.timetableRender()
+            : <View style={styles.container}>
             <FlatList
             data = {this.state.eventList}
-            keyExtractor = {({item}) => {
-              detail = new Object(item)
-              return String(detail.module) + String(detail.title)
+            keyExtractor = {(item, index) => {
+              return item['module'] + item['title']
             }}
             renderItem = {({item}) => {
-              data = new Object(item)
+              var data = new Object(item)
               return (
               <View style = {this.customStyle(data.module)}>
-                <View style = {{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between'}}>
-                  <Text style = {{fontSize: 20}}> {String(data.module) +" " +  String(data.title)}</Text>
+                <TouchableOpacity onPress = {() => {this.setState({modalModule : data, showModal: true})}}>
+                  <View style = {{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between'}}>
+                    <Text style = {{fontSize: 20}}> {String(data.module) +" " +  String(data.title)}</Text>
+                  </View>
                   <Text style = {{fontSize: 15}}>{"Due on: " + String(data.day) + " " + String(data.startTime)}</Text>
-                </View>
-                {item.extra_description.length != 0 && <Text style = {{fontSize: 15}}>{"Description: " + String(item.extra_description)}</Text>}
+                  {item.extra_description.length != 0 && <Text style = {{fontSize: 15}}>{"Description: " + String(item.extra_description)}</Text>}
+                </TouchableOpacity>
               </View>
               )
             }}
             />
-           
-            </View>
-          }
-        </SafeAreaView>
-      );
+          </View>
+            }
+      </SafeAreaView>
+    )
+  }
+
+
+
+  render() {
+    if (this.state.loading){
+      return (
+        <View style = {{flex: 1, justifyContent: 'center'}}>
+          <ActivityIndicator size="large" color="#45B39D" />
+        </View>
+      )
+    } else {
+      return this.state.showDropDown ? this.dropDownContent() : this.content()
     }
   }
 }
 
+const flatListItemStyle = StyleSheet.create({
+  container: {
+      flex: 7,
+      borderWidth: 1,
+      marginLeft: 5,
+      padding: 5,
+      backgroundColor: 'white',
+  },
+})
+
 const styles = StyleSheet.create({
   headerStyle: {
-    backgroundColor: '#CD6155',
+    backgroundColor: '#45B39D',
   },
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
   },
 });
+
+const modalStyle = StyleSheet.create({
+  modalContainer : {
+    backgroundColor: 'white',
+    marginVertical: Dimensions.get('window').height /4,
+    height: Dimensions.get('window').height / 2,
+    marginHorizontal: Dimensions.get('window').width / 6,
+    padding: 10,
+    borderRadius: 10,
+  },
+  innerModal: {
+    flex: 1,
+    flexDirection: "row",
+    borderWidth: 1,
+  },
+  title: {
+    flex: 1,
+  },
+  dataContainer: {
+    borderWidth: 1,
+    flex: 2,
+    borderColor: '#05375a',
+    padding: 5,
+  }
+})
+
+const functionBar = StyleSheet.create({
+  input: {
+    borderColor: '#45B39D',
+    borderWidth: 2,
+    flex: 7,
+    height: 40,
+    marginLeft: 5,
+    padding: 4,  
+  },
+
+  buttonContainer: {
+    alignContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#45B39D',
+    flex: 1,
+    marginLeft: 5,
+    padding: 4,
+  }
+})
+
 
 const myStyle = StyleSheet.create({
     flatListStyle: {
@@ -303,10 +525,11 @@ const myStyle = StyleSheet.create({
     },
 
     buttons : {
-        padding: 4,
-        flex: 2,
+        padding:4,
+        flex: 1,
         flexDirection: "row",
         alignItems: "center",
+        backgroundColor: '#45B39D'
     },
 
     SearchButton : {
@@ -320,14 +543,7 @@ const myStyle = StyleSheet.create({
         margin: 1,
     },
 
-    input: {
-        flex: 3,
-        borderWidth: 1,
-        borderColor: '#777',
-        padding: 4,
-        margin: 10,
-        height: 40,
-    },
+    
 
     textStyle: {
         fontSize: 15,

@@ -96,10 +96,11 @@ export default class Login extends Component {
           title="Signin"
           onPress={() => this.userLogin()}
         />
-        {/*        <Button
+        
+        <Button
           title = "Phyo Han Testing Ground"
           onPress = {() => this.props.navigation.navigate('Test')}
-        />*/}
+        />
 
 
         <Text 
