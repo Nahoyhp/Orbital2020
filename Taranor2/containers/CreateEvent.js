@@ -1,14 +1,12 @@
 import React, { Component } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Picker, Label} from 'react-native';
-import { FormLabel, FormInput, FormValidationMessage } from 'react-native-elements'
-import BlueButton from './BlueButton';
+import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Picker, Label, CheckBox} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { Button, Input } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import database from '../API/firebaseAPI';
 
 const dayList = ['SUN','MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', ]
 
@@ -46,47 +44,50 @@ export default class CreateEvent extends Component{
     updateLocation = (location) => this.setState({location})
 
     updateExtraDescription = (extra_description) => this.setState({extra_description})
-   
-    createNewEvent = () => {
-       firestore().collection('modules').doc(this.state.module)
-       .collection('Events').doc(this.state.title)
-       .set({
-           title : this.state.title,
-           startTime : this.state.startTime,
-           endTime : this.state.endTime,
-           location : this.state.location,
-           extra_description : this.state.extra_description,
-           date : this.state.date,
-           createdAt: firestore.FieldValue.serverTimestamp(),
-           createdBy: auth().currentUser.displayName,
-           module : this.state.module,
-           day: this.state.day
-       })
 
-       this.setState({
-        module:'',
-        title: '',
-        startTime: '',
-        endTime: '',
-        location: '',
-        extra_description: '',
-        date: '',
-        created: false,
-        moduleList: [],
+    checkInput = () => {
+        let valid = this.state.module != ''
+        valid = valid && this.state.title.length != 0
+        valid = valid && (this.state.startTime != '' && this.state.endTime != '')
+        valid = valid && this.state.date != ''
+        return valid
 
-        date : new Date(),
-        dateDisplay: '',
-        setDate: false,
-        show : false,
+    }
 
-        day : '',
-        mode : 'date',
-
-
-        showStart: false,
-        showEnd: false,
-        display: 'default',
+    reset = () => {
+        this.setState({
+            module:'',
+            title: '',
+            startTime: '',
+            endTime: '',
+            location: '',
+            extra_description: '',
+            date: '',
+            created: false,
+            moduleList: [],
+        
+            date : new Date(),
+            dateDisplay: '',
+            setDate: false,
+            show : false,
+        
+            day : '',
+            mode : 'date',
+        
+        
+            showStart: false,
+            showEnd: false,
+            display: 'default',
         })
+    }
+
+    createNewEvent = () => {
+       if (!this.checkInput()) {
+           Alert.alert("Error", "Please fill in all the necessary detail")
+           return
+       }
+
+       database.createEvent({state: this.state, function: () => this.reset()})
     }
 
     updateDate = (event, selectedDate) => {
@@ -216,6 +217,8 @@ export default class CreateEvent extends Component{
                 onChangeText={this.updateExtraDescription}
                 ref = {(input) => {this.extraDescription = input}}
                 onSubmitEditing = {this.createNewEvent}
+                scrollEnabled = {true}
+                multiline= {true}
                 />
 
                 <Button

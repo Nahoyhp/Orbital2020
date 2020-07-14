@@ -45,7 +45,7 @@ export default class Login extends Component {
           let response = await auth().signInWithEmailAndPassword(this.state.email, this.state.password)
           if (response && response.user) {
             this.setState({isLoading: false})
-            this.props.navigation.navigate('Dashboard')
+            this.props.navigation.navigate('Content')
           }
     
         }catch (e) {

@@ -68,8 +68,7 @@ export default class Signup extends Component {
       .then( (res) => {
         res.user.updateProfile({
           displayName: this.state.displayName
-        })  
-        console.log('User registered successfully!')
+        }) 
 
         firestore().collection('users').doc(res.user.uid)
         .set({
@@ -88,7 +87,7 @@ export default class Signup extends Component {
           email: '', 
           password: ''
         })
-        this.props.navigation.navigate('Login')
+        this.props.navigation.navigate('SignIn')
       })
       .catch(error => {
         if (error.code === 'auth/email-already-in-use') {

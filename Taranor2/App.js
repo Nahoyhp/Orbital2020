@@ -84,14 +84,14 @@ function Content() {
       },
     })}
     tabBarOptions = {{
-      activeTintColor: 'tomato',
+      activeTintColor: '#FF8C00',
       inactiveTintColor: 'gray',
       activeBackgroundColor: '#45B39D',
       inactiveBackgroundColor: 'white',
       keyboardHidesTabBar: true,
     }}
     >
-      <Tab.Screen name = "Dashboard" component = {DashboardOverlay} />
+      <Tab.Screen name = "Dashboard" component = {Dashboard} />
       <Tab.Screen name = "AddModules" component = {AddModules} />
       <Tab.Screen name = "CreateEvent" component = {CreateEvent}/>
     </Tab.Navigator>

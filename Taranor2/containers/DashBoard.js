@@ -252,26 +252,50 @@ export default class Dashboard extends Component {
             {modalModule.location != '' && this.modalDetail({title: 'Location:', content: modalModule.location})}
             {modalModule.extra_description != '' && this.modalNotes({title: 'Notes :', content: modalModule.extra_description})}
             <View style = {{flex: 1, justifyContent: 'flex-end', flexDirection: 'row'}}>
-              <TouchableOpacity onPress = {null}>
-                <Button
-                  title ="Modify"
-                  type = "solid"
-                  containerStyle = {{marginRight: 5, marginTop: 10}}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress = {null}>
-                <Button
-                  title ="Unsubscribe"
-                  type = "solid"
-                  containerStyle = {{marginRight: 5, marginTop: 10}}
-                />
-              </TouchableOpacity>
+              <Button
+                title ="Delete"
+                type = "solid"
+                containerStyle = {{marginRight: 5, marginTop: 10}}
+                onPress = {() => this.deleteEvent()}
+              />
+              <Button
+                title ="Unsubscribe"
+                type = "solid"
+                containerStyle = {{marginRight: 5, marginTop: 10}}
+                onPress = {() => this.unsubscribe()}
+              />
             </View>
           </View>
         </TouchableOpacity>
       </View>
     </Modal>
     )
+  }
+
+  unsubscribe = () => {
+    var moduleUnsubscribed = this.state.modalModule.module
+    var newEvents = this.state.eventList.filter(item => {
+      return item.module != moduleUnsubscribed
+    })
+    
+    var newSubscribed = this.state.moduleSubscribed.filter(item => {
+      return item != moduleUnsubscribed
+    })
+    database.unsubscribeRecord({eventList: newEvents, moduleSubscribed : newSubscribed})
+    this.setState({eventList : newEvents, moduleSubscribed : newSubscribed, showModal: false})
+  }
+
+  deleteEvent = () => {
+    var eventModule = this.state.modalModule.module
+    var eventTitle = this.state.modalModule.title
+
+    var newEvents = this.state.eventList.filter(item => {
+      return !(item.module == eventModule && item.title == eventTitle)
+    })
+
+    database.deleteEvent({newEventList : newEvents, eventDeleted:this.state.modalModule})
+
+    this.setState({eventList : newEvents, showModal: false})
   }
 
   searchBar = () => {
@@ -283,7 +307,6 @@ export default class Dashboard extends Component {
               value = {this.state.moduleToSubscribe}
               onChangeText = {this.handleUserInput}
               onFocus = {() => this.setState({showDropDown: true})}
-              //showSoftInputOnFocus = {false}
               />
               <Button
               type = 'clear'
@@ -393,6 +416,8 @@ export default class Dashboard extends Component {
       </ScrollView>
     </View>)
   }
+
+
 
   content = () => {
     return (

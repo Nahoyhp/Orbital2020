@@ -1,6 +1,7 @@
 import { React, Component } from "react";
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
+import { Alert } from "react-native";
 
 
 const modules = firestore().collection('modules')
@@ -67,6 +68,7 @@ class firebaseAPI extends Component {
                 temp = [...temp, ...eventArr]
             })
         }
+        this.setState({events: temp})
         return temp
     }
 
@@ -83,6 +85,62 @@ class firebaseAPI extends Component {
         return this.state.selfDetail.moduleInvolved
     }
 
+    async unsubscribeRecord(input) {
+        firestore().collection('users').doc(auth().currentUser.uid).update({moduleInvolved : input.moduleSubscribed })
+        this.setState({events: input.eventList, moduleList: input.moduleSubscribed})
+    }
+
+    //database.deleteEvent({newEventList : newEvents, eventDeleted:this.state.modalModule})
+    async deleteEvent(input) {
+        var moduleName = input.eventDeleted.module
+        var eventName = input.eventDeleted.title
+
+        console.log(eventName)
+
+        modules.doc(moduleName).collection('Events').doc(eventName).delete().then(() => {
+            console.log("Deleted")
+        })
+
+        this.setState({events : input.newEventList})
+    }
+
+    async createEvent(inputData) {
+        var input = inputData.state
+        if (!this.state.moduleNameList.includes(input.module)) {
+            Alert.alert("Error", "Module does not exist")
+            return false
+        }
+
+        await modules.doc(input.module).get()
+        .then(async function(docSnapShot) {
+            if (auth().currentUser.uid == docSnapShot.data().createdByID) {
+                await firestore().collection('modules').doc(input.module)
+                .collection('Events').doc(input.title)
+                .set({
+                    title : input.title,
+                    startTime : input.startTime,
+                    endTime : input.endTime,
+                    location : input.location,
+                    extra_description : input.extra_description,
+                    date : input.date,
+                    createdAt: firestore.FieldValue.serverTimestamp(),
+                    createdBy: auth().currentUser.displayName,
+                    module : input.module,
+                    day: input.day
+                }).then(() => {
+                    Alert.alert("Successful", "You have successfully created " + input.module +  " " + input.title)
+                })
+                console.log("Done creating")
+                inputData.function()
+                return true
+            } else {
+                Alert.alert("Error", "You are not authorised to create Event in this module")
+                return false
+            }
+        }).catch(err => console.log(err))
+
+       return false
+    }
 }
 
 const database = new firebaseAPI()
