@@ -5,11 +5,13 @@ import SignUp from './components/signup';
 import Dashboard from './containers/DashBoard';
 import CreateEvent from './containers/CreateEvent';
 import SignIn from './containers/SignIn'
-import SearchResult from './components/SearchResult'
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator} from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as colours from './colours'
+import { colors } from 'react-native-elements';
+import UpdateModule from './components/UpdateModule';
 
 const Stack = createStackNavigator();
 
@@ -24,7 +26,7 @@ function DashboardOverlay() {
       screenOptions = {{
       headerTitleAlign: 'center',
       headerStyle:{
-        backgroundColor:"#45B39D"
+        backgroundColor:colors.darkblue
       },
       headerTintColor:'#fff',
       headerTitleStyle:{
@@ -43,18 +45,17 @@ function DashboardOverlay() {
       }
     />
 
-    <Stack.Screen 
-      name = "SearchResult" 
-      component = {SearchResult}  
+    <Stack.Screen
+      name = "UpdateModule"
+      component = {UpdateModule}
       options = {
         {
-          headerShown: false,
-          animationEnabled: false,
+        headerShown: false,
+        animationEnabled: false,
         }
       }
     />
   </StackTwo.Navigator>)
-
 }
 
 
@@ -84,14 +85,14 @@ function Content() {
       },
     })}
     tabBarOptions = {{
-      activeTintColor: '#FF8C00',
+      activeTintColor: 'white',
       inactiveTintColor: 'gray',
-      activeBackgroundColor: '#45B39D',
+      activeBackgroundColor: colours.darkblue,
       inactiveBackgroundColor: 'white',
       keyboardHidesTabBar: true,
     }}
     >
-      <Tab.Screen name = "Dashboard" component = {Dashboard} />
+      <Tab.Screen name = "Dashboard" component = {DashboardOverlay} />
       <Tab.Screen name = "AddModules" component = {AddModules} />
       <Tab.Screen name = "CreateEvent" component = {CreateEvent}/>
     </Tab.Navigator>

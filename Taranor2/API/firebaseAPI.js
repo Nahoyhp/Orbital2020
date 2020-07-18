@@ -2,6 +2,7 @@ import { React, Component } from "react";
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import { Alert } from "react-native";
+import * as Dashboard from "../containers/DashBoard";
 
 
 const modules = firestore().collection('modules')
@@ -52,6 +53,10 @@ class firebaseAPI extends Component {
         return temp
     }
 
+    async addNewModule(input) {
+        this.setState({moduleNameList: [...this.state.moduleNameList, input.name]})
+    }
+
     async getEvents() {
         if (Object.keys(this.state.selfDetail).length == 0) {
             await this.getStudentInfo()
@@ -60,13 +65,17 @@ class firebaseAPI extends Component {
         var eventArr = []
         moduleInvolved = new Object(this.state.selfDetail.moduleInvolved)
         for (var i = 0; i < moduleInvolved.length; i++){
-            await modules.doc(moduleInvolved[i])
-            .collection('Events')
-            .get()
-            .then(collectionSnapShot => {
-                eventArr = collectionSnapShot.docs.map(x => Object(x.data()))
-                temp = [...temp, ...eventArr]
-            })
+                await modules.doc(moduleInvolved[i])
+                .collection('Events')
+                .get()
+                .then(collectionSnapShot => {
+                    eventArr = collectionSnapShot.docs.map(x => Object(x.data())).map(mod => {
+                        mod.startTime = Date(mod.startDate)
+                        mod.endTime = Date(mod.endDate)
+                        return mod
+                    })
+                    temp = [...temp, ...eventArr]
+                }).catch(err => console.log(err))
         }
         this.setState({events: temp})
         return temp
@@ -74,7 +83,7 @@ class firebaseAPI extends Component {
 
     async getDetail() { 
         await this.getEvents()
-        return this.state.events 
+        return this.state.events
     }
 
 
@@ -86,24 +95,19 @@ class firebaseAPI extends Component {
     }
 
     async unsubscribeRecord(input) {
-        firestore().collection('users').doc(auth().currentUser.uid).update({moduleInvolved : input.moduleSubscribed })
+        await firestore().collection('users').doc(auth().currentUser.uid).update({moduleInvolved : input.moduleSubscribed })
         this.setState({events: input.eventList, moduleList: input.moduleSubscribed})
     }
 
-    //database.deleteEvent({newEventList : newEvents, eventDeleted:this.state.modalModule})
     async deleteEvent(input) {
         var moduleName = input.eventDeleted.module
         var eventName = input.eventDeleted.title
-
-        console.log(eventName)
-
-        modules.doc(moduleName).collection('Events').doc(eventName).delete().then(() => {
-            console.log("Deleted")
-        })
-
+    
+        modules.doc(moduleName).collection('Events').doc(eventName).delete()
+    
         this.setState({events : input.newEventList})
     }
-
+    
     async createEvent(inputData) {
         var input = inputData.state
         if (!this.state.moduleNameList.includes(input.module)) {
@@ -111,35 +115,51 @@ class firebaseAPI extends Component {
             return false
         }
 
+
+        var eventData = {
+            title : input.title,
+            startTime : input.startTime,
+            endTime : input.endTime,
+            location : input.location,
+            extra_description : input.extra_description,
+            startDate : input.date,
+            endDate : input.endDate,
+            createdAt: firestore.FieldValue.serverTimestamp(),
+            createdBy: auth().currentUser.displayName,
+            module : input.module,
+            day: input.day
+        }
+    
         await modules.doc(input.module).get()
         .then(async function(docSnapShot) {
             if (auth().currentUser.uid == docSnapShot.data().createdByID) {
                 await firestore().collection('modules').doc(input.module)
                 .collection('Events').doc(input.title)
-                .set({
-                    title : input.title,
-                    startTime : input.startTime,
-                    endTime : input.endTime,
-                    location : input.location,
-                    extra_description : input.extra_description,
-                    date : input.date,
-                    createdAt: firestore.FieldValue.serverTimestamp(),
-                    createdBy: auth().currentUser.displayName,
-                    module : input.module,
-                    day: input.day
-                }).then(() => {
-                    Alert.alert("Successful", "You have successfully created " + input.module +  " " + input.title)
+                .set(eventData).then(() => {
+                    Dashboard.addToEventList(eventData)
+                    inputData.successMessage()
                 })
-                console.log("Done creating")
-                inputData.function()
                 return true
             } else {
                 Alert.alert("Error", "You are not authorised to create Event in this module")
                 return false
             }
-        }).catch(err => console.log(err))
+        }).then(() => {
+        })
+        .catch(err => console.log(err))
+    }
 
-       return false
+    async updateInfo(inputData) {
+        this.setState({events: inputData.newEventList})
+        let modifiedEvent = inputData.modifiedEvent
+        modules.doc(modifiedEvent.module).collection('Events').doc(modifiedEvent.title).update({
+            startTime: modifiedEvent.startTime,
+            endTime: modifiedEvent.endTime,
+            location: modifiedEvent.location,
+            extra_description: modifiedEvent.extra_description,
+            startDate: modifiedEvent.date, 
+            endDate: modifiedEvent.endDate,
+        }).catch(err => console.log(err))
     }
 }
 

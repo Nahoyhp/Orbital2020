@@ -19,8 +19,12 @@ import database from '../API/firebaseAPI';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Octicons from 'react-native-vector-icons/Octicons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import { Button } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
+import moment from "moment"
+import * as colours from '../colours'
+import UpdateModule from '../components/UpdateModule';
 
 const events_data = [
     {
@@ -30,68 +34,58 @@ const events_data = [
       location: "Classroom 403",
       extra_descriptions: ["Kim Lee"],
     },
-    {
-      title: "Math",
-      startTime: genTimeBlock("WED", 9),
-      endTime: genTimeBlock("WED", 10, 50),
-      location: "Classroom 403",
-      extra_descriptions: ["Kim", "Lee"],
-    },
-    {
-      title: "Physics",
-      startTime: genTimeBlock("MON", 11),
-      endTime: genTimeBlock("MON", 11, 50),
-      location: "Lab 404",
-      extra_descriptions: ["Einstein"],
-    },
-    {
-      title: "Physics",
-      startTime: genTimeBlock("WED", 11),
-      endTime: genTimeBlock("WED", 11, 50),
-      location: "Lab 404",
-      extra_descriptions: ["Einstein"],
-    },
-    {
-      title: "Mandarin",
-      startTime: genTimeBlock("TUE", 9),
-      endTime: genTimeBlock("TUE", 10, 50),
-      location: "Language Center",
-      extra_descriptions: ["Chen"],
-    },
-    {
-      title: "Japanese",
-      startTime: genTimeBlock("FRI", 9),
-      endTime: genTimeBlock("FRI", 10, 50),
-      location: "Language Center",
-      extra_descriptions: ["Nakamura"],
-    },
-    {
-      title: "Club Activity",
-      startTime: genTimeBlock("THU", 9),
-      endTime: genTimeBlock("THU", 10, 50),
-      location: "Activity Center",
-    },
-    {
-      title: "Club Activity",
-      startTime: genTimeBlock("FRI", 13, 30),
-      endTime: genTimeBlock("FRI", 14, 50),
-      location: "Activity Center",
-    },
   ];
 
 const dayArr = ['MON', 'TUE','WED', 'THU','FRI', 'SAT','SUN']
 
-const colorArr = ["#AC96B6",'#048A81',"#54C6EB","#6FA8D6","#8A89C0","#8A89C0"]
+const colorArr = ["#8A89C0",'#116466', 'D1E8E2',"#EDC7B7",'#D2FDFF', "#BAB2B5","#123C69","#AC96B6","#D9B08C",'#048A81',"#6FA8D6",'#D6CE15',]
 
-const dataTitle = ['module', 'title','createdBy', 'date', 'startTime', 'endTime', 'extra_description']
 
 function compare(a,b){
-  var aIndex = dayArr.indexOf(a["day"])
-  var bIndex = dayArr.indexOf(b['day'])
-  var result = aIndex - bIndex
+  var aDate = moment(a['startDate'].toDate())
+  var bDate = moment(b['startDate'].toDate())
 
-  if (result != 0) {return result}
-  else { return Date(a['date']).getHours() - Date(b['date']).getHours() }
+  if (aDate.isBefore(bDate)){return -1}
+  else if (aDate.isSame(bDate)) {return 0}
+  else {return 1}
+}
+
+export async function addToEventList(input) {
+  await this.setState({eventList: [...this.state.eventList, input]})
+}  
+
+export async function deleteModalModule() {
+  var eventDeleted = this.state.modalModule
+  var newEventList = this.state.eventList.filter(item => {
+    var token = item.module == eventDeleted.module && item.title == eventDeleted.title
+    return !token
+  })
+  var message = eventDeleted.module + " " + eventDeleted.title + " has been deleted"
+  database.deleteEvent({eventDeleted: eventDeleted, newEventList: newEventList})
+  await this.setState({eventList: newEventList})
+  Alert.alert("Delete Successful", message,
+  [{text: 'Move back to Dashboard', onPress: () => this.props.navigation.jumpTo('Dashboard')},],
+  {cancelable: false})
+}
+
+export async function updateInfo(input) {
+  var newEventList = this.state.eventList.map(mod => {
+    if (mod.module == input.module && mod.title == input.title) {
+      mod.startDate = input.startDate.toDate()
+      mod.endDate = input.endDate.toDate()
+      mod.extra_description = input.extra_description
+      mod.location = input.location
+    }
+    return mod
+  })
+  database.updateInfo({newEventList: newEventList, modifiedEvent : input})
+  var message = input.module + " " + input.title + " has been updated"
+
+  Alert.alert("Update Successful", message,
+  [{text: 'Move back to Dashboard', onPress: () => this.props.navigation.navigate('Dashboard')},],
+  {cancelable: false})
+
+  await this.setState({eventList : newEventList})
 }
 
 export default class Dashboard extends Component {
@@ -112,6 +106,9 @@ export default class Dashboard extends Component {
       showDropDown: false,
       modalModule: {}        
     }
+    addToEventList = addToEventList.bind(this)
+    deleteModalModule = deleteModalModule.bind(this)
+    updateInfo = updateInfo.bind(this)
   }
 
   onModal = ({data}) => {
@@ -148,8 +145,7 @@ export default class Dashboard extends Component {
       this.getModuleNameList()
       this.getStudentInfo()
       var temp = await database.getEvents()
-      temp.sort(compare)
-      this.setState({eventList : temp, loading: false})
+      this.setState({eventList : temp.sort(compare), loading: false})
     }
   }
 
@@ -228,6 +224,8 @@ export default class Dashboard extends Component {
 
   modalContent = () => {
     var modalModule = this.state.modalModule
+    var startMoment = Object(modalModule.startDate) instanceof Date ? moment(modalModule.startDate) : moment(modalModule.startDate.toDate())
+    var endMoment = Object(modalModule.endDate) instanceof Date ? moment(modalModule.endDate) : moment(modalModule.endDate.toDate())
     return (
     <Modal
     style = {{flex: 1}}
@@ -247,16 +245,32 @@ export default class Dashboard extends Component {
               />
             </View>
             {this.modalDetail({title: 'Module :', content: modalModule.module})}
-            {this.modalDetail({title: 'Time :', content: modalModule.day + " " + modalModule.startTime + " - " + modalModule.endTime}) }
+            {this.modalDetail({title: 'Time :', content: modalModule.day + " " + startMoment.format('HH[:]mm') + " - " + endMoment.format('HH[:]mm')}) }
             {this.modalDetail({title: 'CreatedBy :', content: modalModule.createdBy})}
             {modalModule.location != '' && this.modalDetail({title: 'Location:', content: modalModule.location})}
             {modalModule.extra_description != '' && this.modalNotes({title: 'Notes :', content: modalModule.extra_description})}
             <View style = {{flex: 1, justifyContent: 'flex-end', flexDirection: 'row'}}>
               <Button
-                title ="Delete"
+                title ="Modify"
                 type = "solid"
                 containerStyle = {{marginRight: 5, marginTop: 10}}
-                onPress = {() => this.deleteEvent()}
+                onPress = {() => {
+                  console.log(modalModule)
+                  this.props.navigation.navigate('UpdateModule', {
+                    module: modalModule.module,
+                    title: modalModule.title,
+
+                    startDate: modalModule.startDate,
+                    endDate: modalModule.endDate,
+
+                    startTime: modalModule.startTime,
+                    endTime: modalModule.endTime,
+
+                    location: modalModule.location,
+                    extra_description: modalModule.extra_description,
+                  })
+                  this.setState({showModal: false})
+                }}
               />
               <Button
                 title ="Unsubscribe"
@@ -324,10 +338,16 @@ export default class Dashboard extends Component {
               type = 'clear'
               containerStyle = {functionBar.buttonContainer}
               icon = {
-                <Octicons
-                name="sync"
-                color={'white'}
-                size={20}
+                this.state.listView ?
+                <MaterialIcons
+                name = 'view-list'
+                color = {'white'}
+                size = {20}
+                />
+                : <Octicons
+                name = 'calendar'
+                color = {'white'}
+                size = {20}
                 />
               }
               onPress = {this.toggleView}
@@ -382,24 +402,6 @@ export default class Dashboard extends Component {
 
   timetableRender = () => {
     return (
-    <View style={styles.container}>
-      <View>
-        <View>
-          <Octicons
-            name = 'arrow-left'
-            color = '#F8F8F8'
-            fontSize = {40}
-          />
-        </View>
-        
-        <View>
-          <Octicons
-            name = 'arrow-right'
-            color = '#F8F8F8'
-            fontSize = {40}
-          />
-        </View>
-      </View>
       <ScrollView>
         <TimeTableView
           scrollViewRef={events_data}
@@ -413,10 +415,8 @@ export default class Dashboard extends Component {
           formatDateHeader="dddd"
           locale="en"
         />
-      </ScrollView>
-    </View>)
+      </ScrollView>)
   }
-
 
 
   content = () => {
@@ -426,6 +426,8 @@ export default class Dashboard extends Component {
         { this.searchBar()}
         {!this.state.listView ? this.timetableRender()
             : <View style={styles.container}>
+            {this.state.eventList.length == 0 ? 
+            <Text style = {{alignSelf: 'center', color: colours.lightblue }}>No event exists in your calendar</Text> :
             <FlatList
             data = {this.state.eventList}
             keyExtractor = {(item, index) => {
@@ -433,26 +435,29 @@ export default class Dashboard extends Component {
             }}
             renderItem = {({item}) => {
               var data = new Object(item)
+              console.log(data.startDate)
+              var startMoment = Object(data.startDate) instanceof Date ? moment(data.startDate) : moment(data.startDate.toDate())
               return (
               <View style = {this.customStyle(data.module)}>
                 <TouchableOpacity onPress = {() => {this.setState({modalModule : data, showModal: true})}}>
                   <View style = {{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between'}}>
                     <Text style = {{fontSize: 20}}> {String(data.module) +" " +  String(data.title)}</Text>
                   </View>
-                  <Text style = {{fontSize: 15}}>{"Due on: " + String(data.day) + " " + String(data.startTime)}</Text>
+                  <Text style = {{fontSize: 15}}>
+                    {"Due on: " + startMoment.format('DD[/]MM') + " " + String(data.day) + " " + startMoment.format('HH[:]mm')}
+                  </Text>
                   {item.extra_description.length != 0 && <Text style = {{fontSize: 15}}>{"Description: " + String(item.extra_description)}</Text>}
                 </TouchableOpacity>
               </View>
               )
             }}
             />
+          }
           </View>
             }
       </SafeAreaView>
     )
   }
-
-
 
   render() {
     if (this.state.loading){
@@ -479,7 +484,7 @@ const flatListItemStyle = StyleSheet.create({
 
 const styles = StyleSheet.create({
   headerStyle: {
-    backgroundColor: '#45B39D',
+    backgroundColor: colours.lightblue,
   },
   container: {
     flex: 1,
@@ -514,7 +519,7 @@ const modalStyle = StyleSheet.create({
 
 const functionBar = StyleSheet.create({
   input: {
-    borderColor: '#45B39D',
+    borderColor: colours.lightblue,
     borderWidth: 2,
     flex: 7,
     height: 40,
@@ -525,7 +530,7 @@ const functionBar = StyleSheet.create({
   buttonContainer: {
     alignContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#45B39D',
+    backgroundColor: colours.lightblue,
     flex: 1,
     marginLeft: 5,
     padding: 4,
