@@ -70,8 +70,8 @@ class firebaseAPI extends Component {
                 .get()
                 .then(collectionSnapShot => {
                     eventArr = collectionSnapShot.docs.map(x => Object(x.data())).map(mod => {
-                        mod.startTime = Date(mod.startDate)
-                        mod.endTime = Date(mod.endDate)
+                        mod.startTime = mod.startDate.toDate()
+                        mod.endTime = mod.endDate.toDate()
                         return mod
                     })
                     temp = [...temp, ...eventArr]

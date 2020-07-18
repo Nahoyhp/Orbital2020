@@ -401,11 +401,12 @@ export default class Dashboard extends Component {
   }
 
   timetableRender = () => {
+    console.log(this.state.eventList)
     return (
-      <ScrollView>
+      <View>
         <TimeTableView
-          scrollViewRef={events_data}
-          events={events_data}
+          scrollViewRef={this.scrollViewRef}
+          events={this.state.eventList}
           pivotTime={8}
           pivotEndTime={20}
           pivotDate={this.pivotDate}
@@ -415,7 +416,8 @@ export default class Dashboard extends Component {
           formatDateHeader="dddd"
           locale="en"
         />
-      </ScrollView>)
+      </View>
+      )
   }
 
 
