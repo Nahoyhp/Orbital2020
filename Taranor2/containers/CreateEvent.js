@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Modal,Button, Dimensions, ActivityIndicator} from 'react-native';
+import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Modal,Button} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as colours from '../colours'
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import database from '../API/firebaseAPI';
+import { genTimeBlock } from 'react-native-timetable';
+import firestore from '@react-native-firebase/firestore'
+import auth from '@react-native-firebase/auth'
+import {Picker} from '@react-native-community/picker';
 
 
 const dayList = ['SUN','MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', ]
@@ -21,11 +24,10 @@ export default class CreateEvent extends Component{
             endTime: '',
             location: '',
             extra_description: '',
-            date: '',
             created: false,
             moduleList: [],
 
-            date : new Date(),
+            startDate : new Date(),
             endDate: new Date(),
             dateDisplay: '',
             setDate: false,
@@ -51,7 +53,7 @@ export default class CreateEvent extends Component{
         let valid = this.state.module != ''
         valid = valid && this.state.title.length != 0
         valid = valid && (this.state.startTime != '' && this.state.endTime != '')
-        valid = valid && this.state.date != ''
+        valid = valid && this.state.startDate != ''
         return valid
 
     }
@@ -60,24 +62,22 @@ export default class CreateEvent extends Component{
         this.setState({
             module:'',
             title: '',
+
             startTime: '',
             endTime: '',
+            dateDisplay: '',
+            day : '',
+
             location: '',
             extra_description: '',
-            date: '',
-            created: false,
-            moduleList: [],
         
-            date : new Date(),
+            startDate : new Date(),
             endDate: new Date(),
-            dateDisplay: '',
+
             setDate: false,
             show : false,
-        
-            day : '',
             mode : 'date',
         
-            loading: true,
             showStart: false,
             showEnd: false,
             display: 'default',
@@ -101,12 +101,35 @@ export default class CreateEvent extends Component{
             Alert.alert("Error", "Please fill in all the necessary detail")
             return
         }
-        this.setState({loading: true})
-        database.createEvent({state: this.state, successMessage : input => this.successMessage()})
+
+        var start = this.state.startTime.split(':')
+        var startMoment = genTimeBlock(this.state.day, start[0], start[1])
+        var end = this.state.endTime.split(':')
+        var endMoment = genTimeBlock(this.state.day, end[0], end[1])
+
+        const eventDetail = {
+            module : this.state.module,
+            eventTitle : this.state.title,
+            title : this.state.module + " " + this.state.title,
+
+            startTime : startMoment,
+            endTime : endMoment,
+            day: this.state.day,
+
+            startDate : this.state.startDate,
+            endDate : this.state.endDate,
+
+            location : this.state.location,
+            extra_description : this.state.extra_description,
+
+            createdAt: firestore.FieldValue.serverTimestamp(),
+            createdBy: auth().currentUser.displayName,
+        }
+        database.createEvent({state: eventDetail, successMessage : input => this.successMessage()})
      }
 
     
-     updateDate = (event, selectedDate) => {
+    updateDate = (event, selectedDate) => {
         if (event.type == 'dismissed' || selectedDate == undefined){
             return
         }
@@ -117,7 +140,7 @@ export default class CreateEvent extends Component{
             date += new String(selectedDate.getMonth() + 1 )
             date += " - " + new String(selectedDate.getFullYear())
             this.setState({
-                date: selectedDate,
+                startDate: selectedDate,
                 show: false, 
                 dateDisplay: date,
                 day: dayList[selectedDate.getDay()],
@@ -144,8 +167,8 @@ export default class CreateEvent extends Component{
             return
         }
         try {
-            this.state.date.setHours(selectedTime.getHours())
-            this.state.date.setMinutes(selectedTime.getMinutes())
+            this.state.startDate.setHours(selectedTime.getHours())
+            this.state.startDate.setMinutes(selectedTime.getMinutes())
             var hours = new String(selectedTime.getHours())
             var mins = new String(selectedTime.getMinutes())
             if (hours.length == 1) { hours = "0" + hours}
@@ -163,7 +186,7 @@ export default class CreateEvent extends Component{
             return
         }
         try {
-            var current = new Date(this.state.date.getTime())
+            var current = new Date(this.state.startDate.getTime())
             var hours = new String(selectedTime.getHours())
             var mins = new String(selectedTime.getMinutes())
             current.setHours(hours)
@@ -179,46 +202,38 @@ export default class CreateEvent extends Component{
         }catch (err) {console.log(err)}
     }
 
+    getCodeItems = () => {
+        return [...database.state.selfDetail.managing].sort().map(code => {
+            return (<Picker.Item label = {code} key = {code} value = {code}/>)
+        })
+    }
+
 
     render(){
         return (
             <KeyboardAwareScrollView
                 style = {{flex: 1, paddingBottom: 10, paddingTop: 10,backgroundColor:colours.darkblue,padding:15}}
             >
-                {/*this.state.loading && 
-                <Modal
-                style = {{flex: 1}}
-                visible = {this.state.loading}
-                animationType = 'fade'
-                transparent = {true}
-                >
-                    <View style = {{height: Dimensions.get('window').height, width: Dimensions.get('window').width,backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center'}}>
-                        <ActivityIndicator size="large" color="#45B39D" />
-                    </View>
-
-                </Modal>
-                */}
                 <View style = {styles.top} >
                     <Text style = {styles.header}> Create Event </Text>
                 </View>
                 
                 <View style = {styles.bottom}>    
-                    <View style = {styles.action}>
+                    <View style = {dropDownStyle.style}>
                         <MaterialIcon
                             name = "subject"
                             color = {'#05375a'}
                             size = {20}
                         />
-                        <TextInput style = {styles.inputStyle}
-                            placeholder = "Module Name"
-                            value = {this.state.module}
-                            onChangeText = {this.updateModule}
-                            returnKeyType = "next"
-                            onSubmitEditing = {() => this.secondTextInput.focus()}
-                            blurOnSubmit = {false}
-                        />  
+                        <Picker
+                            style = {{flex: 1}}
+                            selectedValue = {this.state.module}
+                            onValueChange = {(item) => this.setState({module: item})}
+                            placeholder = {{label: "Choose a code "}}
+                        >
+                            {this.getCodeItems()}
+                        </Picker>
                     </View>
-
 
                     <View style = {styles.action}>
                         <MaterialIcon
@@ -314,11 +329,12 @@ export default class CreateEvent extends Component{
                         title="Create Event"
                         onPress={this.createNewEvent}
                     />
+
                 </View>
                 {this.state.show && <DateTimePicker
                 testID = 'datePicker'
                 mode = {'date'}
-                value = {this.state.date}
+                value = {new Date()}
                 onChange = {this.updateDate}
                 is24Hour
                 />}
@@ -338,12 +354,24 @@ export default class CreateEvent extends Component{
                 onChange = {this.updateEndTime}
                 is24Hour
                 />}
-
             </KeyboardAwareScrollView>
             
         )
     }
 }
+const dropDownStyle = StyleSheet.create({
+    style: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f2f2f2',
+        marginBottom: 15,
+        padding:5,
+        flex: 1,
+        zIndex: 10,
+    }
+})
 
 const styles = StyleSheet.create({
     container: {
@@ -354,16 +382,6 @@ const styles = StyleSheet.create({
         padding: 35,
         backgroundColor: colours.darkblue
     },
-
-    fakeInputStyle: {
-        color: '#c2c5cc',
-        marginTop:15,
-        alignContent: 'center',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    // '#05375a'
-    //'#c2c5cc'
 
     top : {
         flex: 1,
@@ -435,4 +453,3 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff'
     }
   })
-  

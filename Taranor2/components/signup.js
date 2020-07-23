@@ -5,7 +5,6 @@ import {
     Text,
     View,
     TextInput,
-    Button,
     Alert,
     ActivityIndicator,
     TouchableOpacity,
@@ -20,6 +19,8 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import * as colours from '../colours'
+import {Button} from 'react-native-elements'
 
 export default class Signup extends Component {
   
@@ -78,6 +79,7 @@ export default class Signup extends Component {
           password: this.state.password,
           role:this.state.role,
           moduleInvolved: [],
+          managing: [],
         })
         .catch(err =>console.error(err))
 
@@ -129,7 +131,7 @@ export default class Signup extends Component {
               <View style = {styles.action}>
                   <FontAwesome 
                   name="user-o"
-                  color={'#05375a'}
+                  color={colours.lightblue}
                   size={20}
                   />
                   <TextInput
@@ -147,7 +149,7 @@ export default class Signup extends Component {
               <View style = {styles.action}>
                   <Fontisto 
                   name="email"
-                  color={'#05375a'}
+                  color={colours.lightblue}
                   size={20}
                   />
                   <TextInput
@@ -165,7 +167,7 @@ export default class Signup extends Component {
               <View style = {styles.action}>
                   <Feather 
                   name="lock"
-                  color={'#05375a'}
+                  color={colours.lightblue}
                   size={20}
                   />
                   <TextInput
@@ -251,11 +253,20 @@ export default class Signup extends Component {
               />
 
               <View style = {styles.buttons}>
-                  <Button
-                      color="#45B39D"
-                      title="Sign Up"
-                      onPress={this.registerUser}
-                  />
+                  <View style = {{flex: 1}}>
+                    <Button
+                        title="Sign Up"
+                        onPress={this.registerUser}
+                        buttonStyle = {{backgroundColor: colours.lightblue, borderTopLeftRadius: 15, borderBottomLeftRadius: 15, marginRight: 3}}
+                    />
+                  </View>
+                  <View style = {{flex: 1}}>
+                    <Button
+                        title="Back to Dashboard"
+                        onPress={() => this.props.navigation.navigate('SignIn')}
+                        buttonStyle = {{backgroundColor: colours.lightblue, borderTopRightRadius: 15, borderBottomRightRadius: 15}}
+                    />
+                  </View>
               </View>
 
           </Animatable.View>
@@ -269,7 +280,7 @@ export default class Signup extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#45B39D',
+    backgroundColor: colours.lightblue,
     flex: 1,
     paddingTop: 65
   },
@@ -318,6 +329,8 @@ const styles = StyleSheet.create({
   buttons: {
       alignContent: 'center',
       marginTop: 30,
+      flex: 1,
+      flexDirection: 'row'
   },
   preloader: {
       left: 0,

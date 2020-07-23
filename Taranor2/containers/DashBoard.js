@@ -18,13 +18,14 @@ import TimeTableView, { genTimeBlock } from 'react-native-timetable';
 import database from '../API/firebaseAPI';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Octicons from 'react-native-vector-icons/Octicons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import { Button } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
 import moment from "moment"
 import * as colours from '../colours'
-import UpdateModule from '../components/UpdateModule';
+
+const dayList = ['SUN','MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', ]
 
 const events_data = [
     {
@@ -42,8 +43,8 @@ const colorArr = ["#8A89C0",'#116466', 'D1E8E2',"#EDC7B7",'#D2FDFF', "#BAB2B5","
 
 
 function compare(a,b){
-  var aDate = moment(a['startDate'].toDate())
-  var bDate = moment(b['startDate'].toDate())
+  var aDate = moment(a.startDate)
+  var bDate = moment(b.startDate)
 
   if (aDate.isBefore(bDate)){return -1}
   else if (aDate.isSame(bDate)) {return 0}
@@ -71,8 +72,10 @@ export async function deleteModalModule() {
 export async function updateInfo(input) {
   var newEventList = this.state.eventList.map(mod => {
     if (mod.module == input.module && mod.title == input.title) {
-      mod.startDate = input.startDate.toDate()
-      mod.endDate = input.endDate.toDate()
+      mod.startDate = input.startDate
+      mod.endDate = input.endDate
+      mod.startTime = input.startTime
+      mod.endTime = input.endTime
       mod.extra_description = input.extra_description
       mod.location = input.location
     }
@@ -104,11 +107,19 @@ export default class Dashboard extends Component {
       loading: true,
       showModal: false,
       showDropDown: false,
-      modalModule: {}        
+      modalModule: {},
+      currentDate: new moment().startOf('isoWeek').day(0),
+      week: new moment().week()        
     }
     addToEventList = addToEventList.bind(this)
     deleteModalModule = deleteModalModule.bind(this)
     updateInfo = updateInfo.bind(this)
+  }
+
+  currentWeekEvents = (item) => {
+    var startMoment = moment(item.startDate)
+    var currentWeek = startMoment.day() == 0 ? startMoment.week() - 1 : startMoment.week() 
+    return currentWeek == this.state.week
   }
 
   onModal = ({data}) => {
@@ -150,7 +161,8 @@ export default class Dashboard extends Component {
   }
 
   onEventPress = (evt) => {
-    Alert.alert("onEventPress", JSON.stringify(evt));
+    this.setState({modalModule : evt, showModal: true})
+    this.modalContent(evt);
   };
 
   subscribeNewModule = async () => {
@@ -224,8 +236,9 @@ export default class Dashboard extends Component {
 
   modalContent = () => {
     var modalModule = this.state.modalModule
-    var startMoment = Object(modalModule.startDate) instanceof Date ? moment(modalModule.startDate) : moment(modalModule.startDate.toDate())
-    var endMoment = Object(modalModule.endDate) instanceof Date ? moment(modalModule.endDate) : moment(modalModule.endDate.toDate())
+    console.log(JSON.stringify(modalModule.startDate))
+    var startMoment = moment(modalModule.startDate)
+    var endMoment = moment(modalModule.endDate)
     return (
     <Modal
     style = {{flex: 1}}
@@ -250,28 +263,31 @@ export default class Dashboard extends Component {
             {modalModule.location != '' && this.modalDetail({title: 'Location:', content: modalModule.location})}
             {modalModule.extra_description != '' && this.modalNotes({title: 'Notes :', content: modalModule.extra_description})}
             <View style = {{flex: 1, justifyContent: 'flex-end', flexDirection: 'row'}}>
-              <Button
-                title ="Modify"
-                type = "solid"
-                containerStyle = {{marginRight: 5, marginTop: 10}}
-                onPress = {() => {
-                  console.log(modalModule)
-                  this.props.navigation.navigate('UpdateModule', {
-                    module: modalModule.module,
-                    title: modalModule.title,
+              {database.state.selfDetail.managing.includes(modalModule.module) && 
+                <Button
+                  title ="Modify"
+                  type = "solid"
+                  containerStyle = {{marginRight: 5, marginTop: 10}}
+                  onPress = {() => {
+                    this.props.navigation.navigate('UpdateEvent', {
+                      module: modalModule.module,
+                      title: modalModule.title,
+                      eventTitle: modalModule.eventTitle,
 
-                    startDate: modalModule.startDate,
-                    endDate: modalModule.endDate,
+                      startDate: modalModule.startDate,
+                      endDate: modalModule.endDate,
+                      day: modalModule.day,
 
-                    startTime: modalModule.startTime,
-                    endTime: modalModule.endTime,
+                      startTime: modalModule.startTime,
+                      endTime: modalModule.endTime,
 
-                    location: modalModule.location,
-                    extra_description: modalModule.extra_description,
-                  })
-                  this.setState({showModal: false})
-                }}
-              />
+                      location: modalModule.location,
+                      extra_description: modalModule.extra_description,
+                    })
+                    this.setState({showModal: false})
+                  }}
+                />
+              }
               <Button
                 title ="Unsubscribe"
                 type = "solid"
@@ -400,34 +416,73 @@ export default class Dashboard extends Component {
       return item.includes(this.state.moduleToSubscribe)
   }
 
-  timetableRender = () => {
-    console.log(this.state.eventList)
-    return (
-      <View>
-        <TimeTableView
-          scrollViewRef={this.scrollViewRef}
-          events={this.state.eventList}
-          pivotTime={8}
-          pivotEndTime={20}
-          pivotDate={this.pivotDate}
-          numberOfDays={this.numOfDays}
-          onEventPress={this.onEventPress}
-          headerStyle={styles.headerStyle}
-          formatDateHeader="dddd"
-          locale="en"
-        />
-      </View>
-      )
+  nextWeek = () => {
+    this.setState({
+      currentDate : this.state.currentDate.day(7),
+      week: this.state.week + 1,
+    })
   }
 
+  prevWeek = () => {
+    this.setState({
+      currentDate : this.state.currentDate.day(-7),
+      week: this.state.week - 1,
+    })
+  }
+
+  timetableRender = () => {
+    return (
+      <SafeAreaView style={{flex: 1}}>
+        <View style = {timetableStyle.topBar}>
+          <TouchableOpacity style = {timetableStyle.arrows} onPress = {this.prevWeek}>
+            <SimpleLineIcons
+              name = 'arrow-left'
+              size = {15}
+              color = 'white'
+            />
+          </TouchableOpacity>
+          <View style = {{flex: 5, alignItems: 'center', alignContent: 'center'}}>
+            <Text style = {timetableStyle.text}>
+              {/*this.state.currentDate.format('DD/MM')*/}
+              {"Week " + this.state.week}
+              
+            </Text>
+          </View>
+          <TouchableOpacity style = {timetableStyle.arrows} onPress = {this.nextWeek}>
+            <SimpleLineIcons
+              name = 'arrow-right'
+              size = {15}
+              color = 'white'
+            />
+          </TouchableOpacity>
+        </View>
+        <ScrollView>
+          <View style = {styles.container}>
+            <TimeTableView
+              scrollViewRef={this.scrollViewRef}
+              events={this.state.eventList.filter(item => this.currentWeekEvents(item))}
+              pivotTime={8}
+              pivotEndTime={20}
+              pivotDate={this.pivotDate}
+              numberOfDays={5}
+              onEventPress={this.onEventPress}
+              headerStyle={styles.headerStyle}
+              formatDateHeader="dddd"
+              locale="en"
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+      )
+  }
 
   content = () => {
     return (
       <SafeAreaView style={{flex: 1,}}>
         { this.state.showModal && this.modalContent() }
         { this.searchBar()}
-        {!this.state.listView ? this.timetableRender()
-            : <View style={styles.container}>
+        {this.state.listView ? this.timetableRender()
+            : <View style={{flex: 1}}>
             {this.state.eventList.length == 0 ? 
             <Text style = {{alignSelf: 'center', color: colours.lightblue }}>No event exists in your calendar</Text> :
             <FlatList
@@ -437,7 +492,6 @@ export default class Dashboard extends Component {
             }}
             renderItem = {({item}) => {
               var data = new Object(item)
-              console.log(data.startDate)
               var startMoment = Object(data.startDate) instanceof Date ? moment(data.startDate) : moment(data.startDate.toDate())
               return (
               <View style = {this.customStyle(data.module)}>
@@ -456,7 +510,7 @@ export default class Dashboard extends Component {
             />
           }
           </View>
-            }
+          }
       </SafeAreaView>
     )
   }
@@ -473,6 +527,31 @@ export default class Dashboard extends Component {
     }
   }
 }
+
+const timetableStyle = StyleSheet.create({
+  topBar: {
+    backgroundColor: colours.lightblue,
+    marginTop: 5,
+    flexDirection: 'row',
+    alignContent: 'space-between'
+  },
+  arrows : {
+    flex: 1,
+    padding: 5,
+    alignItems: 'center'
+  }, 
+  text: {
+    fontSize: 15,
+    color: 'white',
+  },
+  headerStyle: {
+    backgroundColor: colours.lightblue,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+})
 
 const flatListItemStyle = StyleSheet.create({
   container: {

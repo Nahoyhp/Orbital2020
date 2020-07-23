@@ -14,6 +14,7 @@ import auth from '@react-native-firebase/auth'
 import * as Animatable from 'react-native-animatable';
 import Feather from 'react-native-vector-icons/Feather';
 import Fontisto from 'react-native-vector-icons/Fontisto';
+import * as colours from '../colours'
 
 export default class Login extends Component {
 
@@ -86,7 +87,7 @@ export default class Login extends Component {
             <View style = {styles.action}>
                 <Fontisto 
                 name="email"
-                color={'#05375a'}
+                color={colours.lightblue}
                 size={20}
                 />
                 <TextInput
@@ -103,7 +104,7 @@ export default class Login extends Component {
             <View style = {styles.action}>
                 <Feather 
                 name="lock"
-                color={'#05375a'}
+                color={colours.lightblue}
                 size={20}
                 />
                 <TextInput
@@ -134,13 +135,13 @@ export default class Login extends Component {
             </View>
             <View style = {styles.buttons}>
                 <Button
-                    color="#45B39D"
+                    color= {colours.lightblue}
                     title="Sign in"
                     onPress={() => this.userLogin()}
                 />
 
                 <Button
-                    color="#45B39D"
+                    color = {colours.lightblue}
                     title="Testing ground"
                     onPress={() => this.props.navigation.navigate('Content')}
                 />
@@ -163,7 +164,7 @@ export default class Login extends Component {
 const styles = StyleSheet.create({
     container: {
       flex : 1,
-      backgroundColor: '#45B39D',
+      backgroundColor: colours.lightblue,
     },
     header:{
         fontSize:30,
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
         color: '#05375a',
     },
     loginText: {
-        color: '#45B39D',
+        color: colours.lightblue,
         marginTop: 25,
         textAlign: 'center'
     },

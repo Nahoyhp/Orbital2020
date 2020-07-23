@@ -53,10 +53,6 @@ class SignUpContainer extends React.Component {
           style={styles.button} 
           onPress= {() => 
             this.handleCreateUser()
-            //name: this.state.name,
-            //email:this.state.email,
-            //password:this.state.password
-          //)
         }/>
         {
           signUpSuccess ? (<Text style={styles.text}> Sign Up Successful! </Text>) : null

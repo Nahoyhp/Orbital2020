@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {SafeAreaView} from 'react-native';
-import AddModules from './components/AddModuleList';
+import CreateModule from './components/CreateModule';
 import SignUp from './components/signup';
 import Dashboard from './containers/DashBoard';
 import CreateEvent from './containers/CreateEvent';
@@ -9,9 +9,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator} from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as colours from './colours'
-import { colors } from 'react-native-elements';
-import UpdateModule from './components/UpdateModule';
+import * as colors from './colours'
+import UpdateEvent from './components/UpdateEvent';
+import ManagePermission from './components/ManagePermission';
 
 const Stack = createStackNavigator();
 
@@ -19,8 +19,10 @@ const Tab = createBottomTabNavigator();
 
 const StackTwo = createStackNavigator();
 
+const StackThree = createStackNavigator();
+
 function DashboardOverlay() {
-  return (
+ return (
   <StackTwo.Navigator 
     initialRouteName = 'Dashboard'
       screenOptions = {{
@@ -46,8 +48,8 @@ function DashboardOverlay() {
     />
 
     <Stack.Screen
-      name = "UpdateModule"
-      component = {UpdateModule}
+      name = "UpdateEvent"
+      component = {UpdateEvent}
       options = {
         {
         headerShown: false,
@@ -72,31 +74,77 @@ function Content() {
           iconName = focused 
           ? 'view-dashboard'
           : 'view-dashboard-outline'
-        } else if (route.name == 'AddModules') {
+        } else if (route.name == 'Create Module') {
           iconName = focused 
-          ? 'view-dashboard'
-          : 'view-dashboard-outline'
-        } else if (route.name == 'CreateEvent') {
+          ? 'alpha-m-box'
+          : 'alpha-m-box-outline'
+        } else if (route.name == 'Create Event') {
           iconName = focused 
-          ? 'account-group'
-          : 'account-group-outline'
+          ? 'calendar'
+          : 'calendar-outline'
+        } else {
+          iconName = focused 
+          ? 'database-edit'
+          : 'database-edit'
         }
+        color = (focused) ? 'white' : 'black'
         return <MaterialCommunityIcons name = {iconName} size = {size} color = {color} />
       },
     })}
     tabBarOptions = {{
       activeTintColor: 'white',
       inactiveTintColor: 'gray',
-      activeBackgroundColor: colours.darkblue,
+      activeBackgroundColor: colors.darkblue,
       inactiveBackgroundColor: 'white',
       keyboardHidesTabBar: true,
     }}
     >
-      <Tab.Screen name = "Dashboard" component = {DashboardOverlay} />
-      <Tab.Screen name = "AddModules" component = {AddModules} />
-      <Tab.Screen name = "CreateEvent" component = {CreateEvent}/>
+      <Tab.Screen name = "Dashboard" component = {DashboardOverlay}/>
+      <Tab.Screen name = "Create Module" component = {CreateModule}/>
+      <Tab.Screen name = "Create Event" component = {CreateEvent}/>
+      <Tab.Screen name = "Manage" component = {ManagePermission}/>
     </Tab.Navigator>
   )
+}
+
+function ManageModule() {
+  return (
+    <StackThree.Navigator 
+    initialRouteName = 'CreateModule'
+      screenOptions = {{
+      headerTitleAlign: 'center',
+      headerStyle:{
+        backgroundColor:colors.lightblue
+      },
+      headerTintColor:'#fff',
+      headerTitleStyle:{
+        fontWeight: 'bold',
+      }
+    }}>
+
+    <Stack.Screen 
+      name = "CreateModule" 
+      component = {CreateModule}  
+      options = {
+        {
+        headerShown: false,
+        animationEnabled: false,
+        }
+      }
+    />
+    {/*
+    <Stack.Screen
+      name = "UpdateModule"
+      component = {UpdateModule}
+      options = {
+        {
+        headerShown: false,
+        animationEnabled: false,
+        }
+      }
+    />
+    */}
+  </StackThree.Navigator>)
 }
 
 

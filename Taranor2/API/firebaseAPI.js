@@ -3,6 +3,7 @@ import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 import { Alert } from "react-native";
 import * as Dashboard from "../containers/DashBoard";
+import { genTimeBlock } from 'react-native-timetable';
 
 
 const modules = firestore().collection('modules')
@@ -15,18 +16,20 @@ class firebaseAPI extends Component {
             moduleList: [],
             selfDetail: {},
             events: [],
+            managingPicker: []
         }
     }
 
     async getModuleList(){
         if (this.state.moduleNameList.length == 0) {
+            console.log("Get Module List")
             await modules.doc("AllModules").get()
             .then(docSnapShot => {
                 docSnapShot.data()['allModules'].forEach(mod => {
                     this.state.moduleNameList.push(mod)
                 })
-            }).catch(err => console.log(err))
-
+            })
+            .catch(err => console.log(err))
         }
         return this.state.moduleNameList
     }
@@ -38,7 +41,11 @@ class firebaseAPI extends Component {
             Object.keys(docSnapShot.data()).forEach(key => {
                 this.state.selfDetail[new String(key)] = docSnapShot.data()[new String(key)]
             })
-        })
+        }).then(() => this.state.selfDetail.managing.forEach(code => this.insertManagingPicker(code)))
+    }
+
+    insertManagingPicker = (input) => {
+       this.state.managingPicker.push({label: input,value: input})
     }
 
     async subscribeNewModule(newModule){
@@ -48,6 +55,7 @@ class firebaseAPI extends Component {
         .get()
         .then(collectionSnapShot => {
             temp = collectionSnapShot.docs.map(x => Object(x.data()))
+            .map(input => this.formatEvent(input))
         })
         this.setState({events: [...this.state.events, ...temp]})
         return temp
@@ -55,6 +63,15 @@ class firebaseAPI extends Component {
 
     async addNewModule(input) {
         this.setState({moduleNameList: [...this.state.moduleNameList, input.name]})
+    }
+
+    formatEvent(input) {
+        console.log(JSON.stringify(input))
+        input.startDate = input.startDate.toDate()
+        input.startTime = input.startTime.toDate()
+        input.endDate = input.endDate.toDate()
+        input.endTime = input.endTime.toDate()
+        return input
     }
 
     async getEvents() {
@@ -69,13 +86,13 @@ class firebaseAPI extends Component {
                 .collection('Events')
                 .get()
                 .then(collectionSnapShot => {
-                    eventArr = collectionSnapShot.docs.map(x => Object(x.data())).map(mod => {
-                        mod.startTime = mod.startDate.toDate()
-                        mod.endTime = mod.endDate.toDate()
-                        return mod
-                    })
+                    eventArr = collectionSnapShot.docs
+                    .map(x => Object(x.data()))
+                    .map(mod => this.formatEvent(mod))
                     temp = [...temp, ...eventArr]
-                }).catch(err => console.log(err))
+                }).catch(err => {
+                    console.log("Firebase API")
+                    console.log(err)})
         }
         this.setState({events: temp})
         return temp
@@ -86,6 +103,36 @@ class firebaseAPI extends Component {
         return this.state.events
     }
 
+    async createModule(input) {
+        if (this.state.moduleNameList.includes(input.code)){
+            Alert.alert("Error", "Another Module with same code exists",
+            [{text: 'Change Module Code', onPress: () => null}],
+            {cancelable: false})
+            return
+        } else {
+            const newModuleNames = [...this.state.moduleNameList, input.code]
+            this.state.moduleNameList.push(input.code)
+            modules.doc('AllModules').update({'allModules' : newModuleNames})
+    
+            modules.doc(input.code).set({
+                code: input.code,
+                name: input.name,
+                description: input.description,
+                createdBy: auth().currentUser.displayName,
+                createdByID: auth().currentUser.uid,
+                timeCreated: firestore.FieldValue.serverTimestamp(),
+            }).catch(err => {
+                console.log("Error at Firebase CreateModule")
+                console.log(err)
+            })
+            input.reset()
+
+            this.state.selfDetail.managing.push(input.code)
+            this.insertManagingPicker(input.code)
+
+            firestore().collection('users').doc(auth().currentUser.uid).update({managing: [...this.state.selfDetail.managing, input.code]})
+        }
+    }
 
     async getModuleSubscribed() {
         if(Object.keys(this.state.selfDetail).length == 0) {
@@ -109,34 +156,22 @@ class firebaseAPI extends Component {
     }
     
     async createEvent(inputData) {
-        var input = inputData.state
-        if (!this.state.moduleNameList.includes(input.module)) {
+        var eventData = inputData.state
+        if (!this.state.moduleNameList.includes(eventData.module)) {
             Alert.alert("Error", "Module does not exist")
             return false
         }
-
-
-        var eventData = {
-            title : input.title,
-            startTime : input.startTime,
-            endTime : input.endTime,
-            location : input.location,
-            extra_description : input.extra_description,
-            startDate : input.date,
-            endDate : input.endDate,
-            createdAt: firestore.FieldValue.serverTimestamp(),
-            createdBy: auth().currentUser.displayName,
-            module : input.module,
-            day: input.day
-        }
-    
-        await modules.doc(input.module).get()
+   
+        await modules.doc(eventData.module).get()
         .then(async function(docSnapShot) {
             if (auth().currentUser.uid == docSnapShot.data().createdByID) {
-                await firestore().collection('modules').doc(input.module)
-                .collection('Events').doc(input.title)
-                .set(eventData).then(() => {
-                    Dashboard.addToEventList(eventData)
+                await firestore().collection('modules').doc(eventData.module)
+                .collection('Events').doc(eventData.eventTitle)
+                .set(eventData)
+                .then(() => {
+                    if (this.state.selfDetail.moduleInvolved.includes(eventData.code)){
+                        Dashboard.addToEventList(eventData)
+                    }
                     inputData.successMessage()
                 })
                 return true
@@ -152,12 +187,12 @@ class firebaseAPI extends Component {
     async updateInfo(inputData) {
         this.setState({events: inputData.newEventList})
         let modifiedEvent = inputData.modifiedEvent
-        modules.doc(modifiedEvent.module).collection('Events').doc(modifiedEvent.title).update({
+        modules.doc(modifiedEvent.module).collection('Events').doc(modifiedEvent.eventTitle).update({
             startTime: modifiedEvent.startTime,
             endTime: modifiedEvent.endTime,
             location: modifiedEvent.location,
             extra_description: modifiedEvent.extra_description,
-            startDate: modifiedEvent.date, 
+            startDate: modifiedEvent.startDate, 
             endDate: modifiedEvent.endDate,
         }).catch(err => console.log(err))
     }
