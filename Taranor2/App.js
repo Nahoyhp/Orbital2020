@@ -1,6 +1,8 @@
 import * as React from 'react';
 import {SafeAreaView} from 'react-native';
 import CreateModule from './components/CreateModule';
+import CreateGroup from './components/CreateGroup';
+
 import SignUp from './components/signup';
 import Dashboard from './containers/DashBoard';
 import CreateEvent from './containers/CreateEvent';
@@ -12,6 +14,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import * as colors from './colours'
 import UpdateEvent from './components/UpdateEvent';
 import ManagePermission from './components/ManagePermission';
+
+import database from './API/firebaseAPI';
+import auth from '@react-native-firebase/auth'
 
 const Stack = createStackNavigator();
 
@@ -46,7 +51,6 @@ function DashboardOverlay() {
         }
       }
     />
-
     <Stack.Screen
       name = "UpdateEvent"
       component = {UpdateEvent}
@@ -78,6 +82,10 @@ function Content() {
           iconName = focused 
           ? 'alpha-m-box'
           : 'alpha-m-box-outline'
+        } else if (route.name == 'Create Group') {
+          iconName = focused 
+          ? 'alpha-g-box'
+          : 'alpha-g-box-outline'
         } else if (route.name == 'Create Event') {
           iconName = focused 
           ? 'calendar'
@@ -100,51 +108,12 @@ function Content() {
     }}
     >
       <Tab.Screen name = "Dashboard" component = {DashboardOverlay}/>
-      <Tab.Screen name = "Create Module" component = {CreateModule}/>
+      {database.state.selfDetail.role == "Teacher" && <Tab.Screen name = "Create Module" component = {CreateModule}/>}
+      <Tab.Screen name = "Create Group" component = {CreateGroup}/>
       <Tab.Screen name = "Create Event" component = {CreateEvent}/>
       <Tab.Screen name = "Manage" component = {ManagePermission}/>
     </Tab.Navigator>
   )
-}
-
-function ManageModule() {
-  return (
-    <StackThree.Navigator 
-    initialRouteName = 'CreateModule'
-      screenOptions = {{
-      headerTitleAlign: 'center',
-      headerStyle:{
-        backgroundColor:colors.lightblue
-      },
-      headerTintColor:'#fff',
-      headerTitleStyle:{
-        fontWeight: 'bold',
-      }
-    }}>
-
-    <Stack.Screen 
-      name = "CreateModule" 
-      component = {CreateModule}  
-      options = {
-        {
-        headerShown: false,
-        animationEnabled: false,
-        }
-      }
-    />
-    {/*
-    <Stack.Screen
-      name = "UpdateModule"
-      component = {UpdateModule}
-      options = {
-        {
-        headerShown: false,
-        animationEnabled: false,
-        }
-      }
-    />
-    */}
-  </StackThree.Navigator>)
 }
 
 
@@ -191,6 +160,7 @@ function StackFn(){
   )
 }
 
+console.disableYellowBox = true;
 export default function App() {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>

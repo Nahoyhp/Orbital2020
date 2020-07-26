@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
       borderTopLeftRadius: 30,
       borderTopRightRadius: 30,
       paddingHorizontal: 20,
-      paddingVertical: 30
+      paddingVertical: 65,
   },
   text_footer: {
       color: '#05375a',
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
       position: 'absolute',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#45B39D'
+      backgroundColor: colours.darkblue,
   },
   warning : {
     color: 'red',

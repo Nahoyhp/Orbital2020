@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import com.reactnativecommunity.clipboard.ClipboardPackage;
 // @react-native-community/datetimepicker
 import com.reactcommunity.rndatetimepicker.RNDateTimePickerPackage;
-// @react-native-community/masked-view
-import org.reactnative.maskedview.RNCMaskedViewPackage;
 // @react-native-community/picker
 import com.reactnativecommunity.picker.RNCPickerPackage;
 // @react-native-firebase/app
@@ -82,7 +80,6 @@ public class PackageList {
       new MainReactPackage(mConfig),
       new ClipboardPackage(),
       new RNDateTimePickerPackage(),
-      new RNCMaskedViewPackage(),
       new RNCPickerPackage(),
       new ReactNativeFirebaseAppPackage(),
       new ReactNativeFirebaseAuthPackage(),

@@ -74,14 +74,14 @@ class addModuleList extends Component{
                         animation = "fadeInRight"
                         duration = {1000}
                         style = {styles.top} >
-                        <Text style = {styles.header}> Create Modules </Text>
+                        <Text style = {styles.header}> Create Module </Text>
                     </View>
 
                     <View 
                         animation = "fadeInUp"
                         duration = {1000}
                         style = {styles.bottom}>
-                        <Text style = {styles.subheader}>Please key in the following details</Text> 
+                        <Text style = {styles.subheader}>Please key in the details</Text> 
                         
                         <View style = {styles.picker}>
                             <MaterialIcon
@@ -116,7 +116,7 @@ class addModuleList extends Component{
                                 size = {20}
                             />
                             <TextInput style = {styles.inputStyle}
-                                placeholder = "Module description" 
+                                placeholder = "Module Description" 
                                 value = {description}
                                 onChangeText={this.handleDescription} 
                             />
@@ -134,8 +134,9 @@ class addModuleList extends Component{
                             <View style = {{flex: 1}}>
                                 <Button
                                     color={colours.darkblue}
-                                    title="Back to dashboard"
+                                    title="To Dashboard"
                                     buttonStyle = {{backgroundColor: colours.lightblue, borderTopRightRadius: 15, borderBottomRightRadius: 15}}
+                                    onPress = {() => this.props.navigation.jumpTo("Dashboard")}
                                 />
                             </View>
                         </View>

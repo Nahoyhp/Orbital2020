@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Modal,Button} from 'react-native';
+import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Modal} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import * as colours from '../colours'
@@ -10,14 +10,21 @@ import { genTimeBlock } from 'react-native-timetable';
 import firestore from '@react-native-firebase/firestore'
 import auth from '@react-native-firebase/auth'
 import {Picker} from '@react-native-community/picker';
-
+import {Button} from 'react-native-elements'
 
 const dayList = ['SUN','MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', ]
+
+export function update(input){
+    this.setState({
+        managing: input
+    })
+}
 
 export default class CreateEvent extends Component{
     constructor() {
         super()
         this.state = {
+            managing: [],
             module:'',
             title: '',
             startTime: '',
@@ -39,6 +46,8 @@ export default class CreateEvent extends Component{
             showEnd: false,
             display: 'default',
         }
+
+        update = update.bind(this)
     }
 
     updateModule = (module) => this.setState({module})
@@ -162,6 +171,8 @@ export default class CreateEvent extends Component{
         this.setState({showEnd: true})
     }
 
+
+
     updateStartTime = (event, selectedTime) => {
         if (event.type == 'dismissed' || selectedTime == undefined){
             return
@@ -203,8 +214,14 @@ export default class CreateEvent extends Component{
     }
 
     getCodeItems = () => {
-        return [...database.state.selfDetail.managing].sort().map(code => {
+        return this.state.managing.sort().map(code => {
             return (<Picker.Item label = {code} key = {code} value = {code}/>)
+        })
+    }
+
+    componentDidMount = () => {
+        this.setState({
+            managing: database.getManaging()
         })
     }
 
@@ -212,7 +229,7 @@ export default class CreateEvent extends Component{
     render(){
         return (
             <KeyboardAwareScrollView
-                style = {{flex: 1, paddingBottom: 10, paddingTop: 10,backgroundColor:colours.darkblue,padding:15}}
+                style = {{flex: 1, paddingBottom: 10, paddingTop: 10,backgroundColor:colours.darkblue}}
             >
                 <View style = {styles.top} >
                     <Text style = {styles.header}> Create Event </Text>
@@ -325,8 +342,9 @@ export default class CreateEvent extends Component{
                     </View>
 
                     <Button
-                        color={colours.darkblue}
+                        color= {colours.darkblue}
                         title="Create Event"
+                        buttonStyle = {{backgroundColor: colours.lightblue, borderTopLeftRadius: 15, borderBottomLeftRadius: 15, borderBottomRightRadius:15,borderTopRightRadius:15}}
                         onPress={this.createNewEvent}
                     />
 

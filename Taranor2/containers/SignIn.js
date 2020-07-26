@@ -5,7 +5,6 @@ import {
     Text,
     View,
     TextInput,
-    Button,
     Alert,
     ActivityIndicator,
     TouchableOpacity
@@ -15,6 +14,8 @@ import * as Animatable from 'react-native-animatable';
 import Feather from 'react-native-vector-icons/Feather';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import * as colours from '../colours'
+import {Button} from 'react-native-elements'
+import database from '../API/firebaseAPI';
 
 export default class Login extends Component {
 
@@ -45,6 +46,8 @@ export default class Login extends Component {
         try {
           let response = await auth().signInWithEmailAndPassword(this.state.email, this.state.password)
           if (response && response.user) {
+            await database.getModuleList()
+            await database.getStudentInfo()
             this.setState({isLoading: false})
             this.props.navigation.navigate('Content')
           }
@@ -83,7 +86,7 @@ export default class Login extends Component {
         animation = "bounceInUp"
         duration = {1500}
         style = {styles.bottom}>
-            <Text style = {styles.text_footer}>Email</Text>
+            <Text style = {styles.text_footer}>E-mail</Text>
             <View style = {styles.action}>
                 <Fontisto 
                 name="email"
@@ -135,13 +138,14 @@ export default class Login extends Component {
             </View>
             <View style = {styles.buttons}>
                 <Button
-                    color= {colours.lightblue}
-                    title="Sign in"
+                    color= {colours.darkblue}
+                    title="Sign In"
+                    buttonStyle = {{backgroundColor: colours.lightblue, borderTopLeftRadius: 15, borderBottomLeftRadius: 15, borderBottomRightRadius:15,borderTopRightRadius:15}}
                     onPress={() => this.userLogin()}
                 />
 
                 <Button
-                    color = {colours.lightblue}
+                    color = {colours.darkblue}
                     title="Testing ground"
                     onPress={() => this.props.navigation.navigate('Content')}
                 />
@@ -219,6 +223,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#45B39D'
+        backgroundColor: colours.darkblue
     }
 })

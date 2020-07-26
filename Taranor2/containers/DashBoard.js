@@ -65,7 +65,7 @@ export async function deleteModalModule() {
   database.deleteEvent({eventDeleted: eventDeleted, newEventList: newEventList})
   await this.setState({eventList: newEventList})
   Alert.alert("Delete Successful", message,
-  [{text: 'Move back to Dashboard', onPress: () => this.props.navigation.jumpTo('Dashboard')},],
+  [{text: 'Move back to Dashboard', onPress: () => this.props.navigation.navigate('Dashboard')},],
   {cancelable: false})
 }
 
@@ -152,7 +152,7 @@ export default class Dashboard extends Component {
 
   async componentDidMount() {
     if (this.state.moduleNameList.length == 0) {
-      await database.getDetail()
+      await database.getEvents()
       this.getModuleNameList()
       this.getStudentInfo()
       var temp = await database.getEvents()
@@ -236,7 +236,6 @@ export default class Dashboard extends Component {
 
   modalContent = () => {
     var modalModule = this.state.modalModule
-    console.log(JSON.stringify(modalModule.startDate))
     var startMoment = moment(modalModule.startDate)
     var endMoment = moment(modalModule.endDate)
     return (
@@ -486,7 +485,9 @@ export default class Dashboard extends Component {
             {this.state.eventList.length == 0 ? 
             <Text style = {{alignSelf: 'center', color: colours.lightblue }}>No event exists in your calendar</Text> :
             <FlatList
-            data = {this.state.eventList}
+            data = {this.state.eventList.filter(event => {
+              return moment(event.startDate).isAfter(new moment())
+            })}
             keyExtractor = {(item, index) => {
               return item['module'] + item['title']
             }}
@@ -497,7 +498,7 @@ export default class Dashboard extends Component {
               <View style = {this.customStyle(data.module)}>
                 <TouchableOpacity onPress = {() => {this.setState({modalModule : data, showModal: true})}}>
                   <View style = {{flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between'}}>
-                    <Text style = {{fontSize: 20}}> {String(data.module) +" " +  String(data.title)}</Text>
+                    <Text style = {{fontSize: 20}}> {String(data.title)}</Text>
                   </View>
                   <Text style = {{fontSize: 15}}>
                     {"Due on: " + startMoment.format('DD[/]MM') + " " + String(data.day) + " " + startMoment.format('HH[:]mm')}
@@ -519,7 +520,7 @@ export default class Dashboard extends Component {
     if (this.state.loading){
       return (
         <View style = {{flex: 1, justifyContent: 'center'}}>
-          <ActivityIndicator size="large" color="#45B39D" />
+          <ActivityIndicator size="large" color={colours.lightblue} />
         </View>
       )
     } else {

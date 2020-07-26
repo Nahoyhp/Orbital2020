@@ -4,17 +4,7 @@
             "outputFile": "C:\\Users\\Phyo Han\\Documents\\GitHub\\Orbital2020\\Taranor2\\android\\app\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-land\\values-land.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Phyo Han\\.gradle\\caches\\transforms-2\\files-2.1\\fac11e4053b0ee70596ac6ed52e12b3e\\appcompat-1.1.0\\res\\values-land\\values-land.xml",
-                    "from": {
-                        "startLines": "2,3,4",
-                        "startColumns": "4,4,4",
-                        "startOffsets": "55,125,196",
-                        "endColumns": "69,70,67",
-                        "endOffsets": "120,191,259"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\Phyo Han\\.gradle\\caches\\transforms-2\\files-2.1\\7c9142c17550c92dab314dac75f37ca0\\material-1.1.0\\res\\values-land\\values-land.xml",
+                    "source": "C:\\Users\\Phyo Han\\.gradle\\caches\\transforms-2\\files-2.1\\2f8bd9c4130c56f7cc8fef2403aea9b0\\material-1.1.0\\res\\values-land\\values-land.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,24,30",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -30,6 +20,16 @@
                         "endLines": "5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,26,32,37",
                         "endColumns": "72,69,71,69,64,66,69,71,68,68,81,89,75,67,66,77,64,66,10,10,10",
                         "endOffsets": "332,402,474,544,609,676,746,818,887,956,1038,1128,1204,1272,1339,1417,1482,1549,1721,2116,2385"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Phyo Han\\.gradle\\caches\\transforms-2\\files-2.1\\34cffa46ca84a386ef7adc4554df2a11\\appcompat-1.1.0\\res\\values-land\\values-land.xml",
+                    "from": {
+                        "startLines": "2,3,4",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,125,196",
+                        "endColumns": "69,70,67",
+                        "endOffsets": "120,191,259"
                     }
                 }
             ]

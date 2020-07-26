@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import {
+    Alert,
+    Modal,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
-    Alert,
 } from 'react-native';
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
@@ -25,18 +27,21 @@ export default class manageModule extends Component {
     constructor(){
         super()
         this.state = {
-            userID : auth().currentUser.uid,
-            showUserID: true,
-            newUser: '',
-            module: '',
-            showCheck: false,
             confirmInput: '',
+            managingList: [],
+            module: '',
+            newUser: '',
+            userID : auth().currentUser.uid,
+
             selected: false,
+            showModal: false,
+            showCheck: false,
+            showUserID: true,
         }
     }
 
     getCodeItems = () => {
-        return [...database.state.selfDetail.managing].sort().map(code => {
+        return this.state. managingList.map(code => {
             return (<Picker.Item label = {code} key = {code} value = {code}/>)
         })
     }
@@ -49,19 +54,31 @@ export default class manageModule extends Component {
         this.setState({showCheck : true})
     }
 
-    confirmDelete = async () => {
-        if (this.state.confirmInput != "Delete_"+ this.state.module) {
-            Alert.alert("Error", "Input does not match")
-            return
-        }
-        //Why Can't call database.function here
-        Alert.alert("Successful", "You have deleted " + this.state.module)
+    reset = (input) => {
         this.setState({
             newUser: '',
             module: '',
+            showCheck: false,
             confirmInput: '',
             selected: false,
         })
+    }
+
+    addUserToGroup = () => {
+        if (this.state.module == '') {
+            Alert.alert("Error", "Please select a module.")
+        }
+        if (this.state.newUser == '') {
+            Alert.alert("Error", "Please key in a user id")
+            return
+        } else if (this.state.newUser == auth().currentUser.uid) {
+            Alert.alert("Error", "You can't add yourself to management of the module")
+            return
+        }else{
+            console.log(this.state.newUser)
+            console.log(this.state.module)
+            database.addUserToGroup({user: this.state.newUser, code: this.state.module})
+        }
     }
 
     addUserToManaging = async () => {
@@ -74,15 +91,21 @@ export default class manageModule extends Component {
             return
         }
         await firestore().collection('users').doc(this.state.newUser).get().then(docSnapShot => {
-            return docSnapShot.data().managing
-        }).then(input => {
+            return docSnapShot.data()
+        }).then(inputData => {
+            var input = inputData.managing
             if (input.includes(this.state.module)){
-                Alert.alert("Unsuccessful", "User is already subscribed to " + this.state.module)
+                Alert.alert("Error", "User is already subscribed to " + this.state.module)
                 return
             }
             firestore().collection('users').doc(this.state.newUser).update({
                 managing: [...input, this.state.module].sort()
             })
+
+            Alert.alert("Successful", "You have given permission for " + inputData.name + "\n(UID: " + this.state.newUser + ")\n to manage module/group with " + this.state.module)
+        }).catch(err => {
+            console.log("@Managing Permission addUserToManaging")
+            console.log(err)
         })
     }
 
@@ -90,6 +113,7 @@ export default class manageModule extends Component {
         console.log("at UMFU function")
         //delete module Name if on array of users
         const userRefs = firestore().collection('users').where("moduleInvolved","array-contains",this.state.module)
+        const userRefs2 = firestore().collection('users').where("managing","array-contains",this.state.module)
         //firestore().collection('users').where("email","==","jj1@gmail.com")
         //delete all events
         firestore().collection('modules').doc(this.state.module).collection('Events')
@@ -98,6 +122,8 @@ export default class manageModule extends Component {
             res.forEach(element => {
                 element.ref.delete();
             })
+        }).catch(err => {
+            console.log("Error: " ,err);
         })
         //remove module from users subscribed to it
         userRefs
@@ -109,16 +135,80 @@ export default class manageModule extends Component {
                 console.log(doc.id, "=>", doc.data());
                 console.log("users removed deleted")
             });
+        }).then( () => {
+            Alert.alert("Successful! Module has been deleted")
+            firestore().collection('modules').doc("AllModules").update({
+                "allModules": database.state.moduleNameList.filter(x => {
+                    console.log(x, x != this.state.module)
+                    return x != this.state.module
+                })
+            }).then(() => {this.setState({module: '',
+            showCheck: false,
+            confirmInput: '',
+            selected: false,})})
+
+        })
+        .catch(function(error) {
+            console.log("Error getting documents: ", error);
+        });
+        userRefs2
+        .get()
+        .then(snapshots => {
+            snapshots.forEach( doc => {
+                doc.ref.update({"managing": firestore.FieldValue.arrayRemove(this.state.module)})
+                console.log(doc.id, "=>", doc.data());
+                console.log("users removed deleted")
+            });
         }).catch(function(error) {
             console.log("Error getting documents: ", error);
         });
         //delete module
         firestore().collection('modules').doc(this.state.module).delete()
+        //remove current user from managing this module
+    }
+    
+    componentDidMount() {
+        this.setState({
+            managingList: database.getManaging(),
+        })
+    }
+
+    modalContent() {
+        return (
+        <Modal
+            style = {{flex: 1,  alignItems: 'center'}}
+            visible = {true}
+            onRequestClose = {() => this.setState({showModal: false})}
+            animationType = 'slide'
+            transparent = {true}
+        >
+            <TouchableOpacity 
+                onPress = {() => this.setState({showModal: false})}
+                style = {{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)',}}>
+        
+                <View style = {{height: '75%', width: '90%', backgroundColor: 'white', alignSelf: 'center', padding: 12}}>
+                    <Text style = {modalText.header}>Instruction to Add User to Manage Module</Text>
+                    <Text style = {modalText.subheader}>Step 1: </Text>
+                    <Text style = {modalText.text}>Ask the intended User for his UID, which can be found under [Manage] > [Show Your UserID].</Text>
+                    <Text style = {modalText.subheader}>Step 2: </Text>
+                    <Text style = {modalText.text}>Paste the intended User's UID in the Text Input below [Enter the new User ID].</Text>
+                    <Text style = {modalText.subheader}>Step 3: </Text>
+                    <Text style = {modalText.text} >If you wish to add the user to your personal group, Click on [Add User]</Text>
+                    <Text style = {modalText.text}>If you wish to make the user an admin of a group or module that you are managing, Click on [Make Admin]</Text>
+                    <View style =  {{height: 10}}/>
+                    <Text style = {modalText.header}>Instruction to delete Module/Group</Text>
+                    <Text style = {modalText.text}>Click on the [Delete Module] and follow instruction</Text>
+                
+                </View>
+            </TouchableOpacity>
+        </Modal>
+        )
     }
 
     render(){
         return (
             <KeyboardAwareScrollView style = {styles.container}>
+                {this.state.showModal && this.modalContent()}
                 {!this.state.showCheck && <View style = {styles.topContainer}>
                     <View style = {{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}>
                         <Text style = {styles.text}>Show Your UserID</Text>
@@ -157,7 +247,14 @@ export default class manageModule extends Component {
                 
                 <View style = {styles.secondContainer}>
                     <View style = {{flexDirection: 'row', alignItems: 'center', marginBottom: 5, borderColor: colours.darkblue}}>
-                        <Text style  = {styles.text}> Manage Module</Text>
+                        <Text style  = {styles.text}>Manage Module / Group</Text>
+                        <TouchableOpacity onPress = {() => this.setState({showModal: true})} style = {{marginLeft: 5}}>
+                            <Fontisto
+                                name = 'question'
+                                color = {colours.lightblue}
+                                size = {20}
+                            />
+                        </TouchableOpacity>
                         <View style = {{borderWidth: 1, flex: 1, marginLeft: 10, marginVertical: 10, borderRadius: 20, paddingLeft: 10}}>
                             <Picker
                                 style = {{flex: 1}}
@@ -187,9 +284,16 @@ export default class manageModule extends Component {
                     <View style = {styles.buttons}>
                         <View style = {{flex: 1}}>
                             <Button
-                                title="Add User"
+                                title="Make Admin"
                                 onPress={this.addUserToManaging}
-                                buttonStyle = {{backgroundColor: colours.lightblue, borderTopLeftRadius: 15, borderBottomLeftRadius: 15, marginRight: 3}}
+                                buttonStyle = {{backgroundColor: colours.lightblue, borderTopLeftRadius: 15, borderBottomLeftRadius: 15}}
+                            />
+                        </View>
+                        <View style = {{flex: 1}}>
+                            <Button
+                            title = "Add User"
+                            onPress = {() => this.addUserToGroup()}
+                            buttonStyle = {{backgroundColor: colours.lightblue, marginHorizontal: 3}}
                             />
                         </View>
                         <View style = {{flex: 1}}>
@@ -201,7 +305,7 @@ export default class manageModule extends Component {
                             />
                             :
                             <Button
-                                title="Delete Module"
+                                title="Delete"
                                 onPress={this.tryDelete}
                                 buttonStyle = {{backgroundColor: colours.lightblue, borderTopRightRadius: 15, borderBottomRightRadius: 15}}
                             />
@@ -239,7 +343,13 @@ export default class manageModule extends Component {
                         />
                         <Button
                         title = "Confirm"
-                        onPress = {this.deleteModule}
+                        onPress = {() => {
+                            var newList = this.state.managingList.filter(x => {
+                                return x != this.state.module})
+                            this.setState({managingList : newList})
+                            
+                            database.deleteModule({moduleCode: this.state.module, function: x => this.reset()})
+                        }}
                         type = 'solid'
                         buttonStyle = {{backgroundColor: colours.lightblue, paddingHorizontal: 15, paddingVertical: 10}}
                         containerStyle = {{marginHorizontal: 10}}
@@ -268,7 +378,7 @@ const styles = StyleSheet.create({
     topContainer: {
         borderBottomWidth: 1,
         padding: 10,
-        paddingBottom: 40,
+        paddingBottom: 20,
     },
     secondContainer: {
         borderBottomWidth: 1,
@@ -300,4 +410,21 @@ const styles = StyleSheet.create({
     copyPaste: {
         marginLeft: 10,
     },
+})
+
+const modalText = StyleSheet.create({
+    header : {
+        fontWeight: 'bold',
+        color : colours.lightblue,
+        textDecorationLine: 'underline',
+        paddingBottom: 10,
+    },
+    subheader: {
+        color: colours.lightblue,
+        fontWeight: 'bold'
+    },
+    text: {
+        textAlign: 'justify',
+        paddingBottom: 7,
+    }
 })

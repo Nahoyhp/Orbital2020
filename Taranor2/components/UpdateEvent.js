@@ -2,15 +2,13 @@ import React, { Component } from 'react';
 import { View, TextInput, StyleSheet, Text, Alert, Keyboard, Picker, Label,Button} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import * as colours from '../colours'
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
-import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import moment from "moment";
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import * as Dashboard from "../containers/DashBoard";
+import { genTimeBlock } from 'react-native-timetable';
 
 const dayList = ['SUN','MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', ]
 
@@ -22,8 +20,7 @@ export default class UpdateModule extends Component{
         this.state = {
             module: '',
             title: '',
-            extra_description:'',
-            endDate: '',  
+            extra_description:'', 
             startTime:'',
             endTime:'',
             location:'',
@@ -50,6 +47,7 @@ export default class UpdateModule extends Component{
             startTime:'',
             endTime:'',
             location:'',
+            eventTitle: '',
 
             startDate : new Date(),
             endDate: new Date(),
@@ -123,6 +121,8 @@ export default class UpdateModule extends Component{
             var month = selectedDate.getMonth()
             var date = selectedDate.getDate()
 
+            var display = ""
+
             this.state.startDate.setFullYear(year)
             this.state.startDate.setMonth(month)
             this.state.startDate.setDate(date)
@@ -131,13 +131,20 @@ export default class UpdateModule extends Component{
             this.state.endDate.setMonth(month)
             this.state.endDate.setDate(date)
 
-            if (selectedDate.getMonth() < 9) { date += '0'}
-            date += new String(selectedDate.getMonth() + 1 )
-            date += " - " + new String(selectedDate.getFullYear())
+            if (date < 10) { display += "0" }
+            display += new String(date) + " - "
+
+            if (month < 10) { display += "0" }
+            display += new String(month) + " - "
+            
+            display += new String(year)
+
+            var newDay = dayList[selectedDate.getDay()]
+
             this.setState({
                 show: false, 
-                dateDisplay: date,
-                day: dayList[selectedDate.getDay()],
+                dateDisplay: display,
+                day: newDay,
                 setDate: true
             })
         } catch (err) {console.log(err)}
@@ -153,44 +160,53 @@ export default class UpdateModule extends Component{
             return
         }
 
-        try {
-            let hour = selectedTime.getHours()
-            let mins = selectedTime.getMinutes()
-            
-            this.state.startDate.setHours(hour)
-            this.state.startDate.setMinutes(mins)
-            this.state.startTime.setHours(hour)
-            this.state.startTime.setMinutes(mins)
+        let hour = selectedTime.getHours()
+        let mins = selectedTime.getMinutes()
+        
+        this.state.startDate.setHours(hour)
+        this.state.startDate.setMinutes(mins)
+        this.state.startTime.setHours(hour)
+        this.state.startTime.setMinutes(mins)
 
-            var strHour = new String(hour)
-            var strMin = new String(mins)
+        var strHour = new String(hour)
+        var strMin = new String(mins)
 
-            if (strHour.length == 1) {strHour = "0" + strHour}
-            if (strMin.length == 1) {strMin = "0" + strMin}
-            var time = strHour + " : " + strMin
-            this.setState({
-                showStart: false,
-                displayStart: time,
-            })
-        } catch (err) {console.log(err)}
+        if (strHour.length == 1) {strHour = "0" + strHour}
+        if (strMin.length == 1) {strMin = "0" + strMin}
+        var time = strHour + " : " + strMin
+
+        if (moment(this.state.startDate).isSameOrAfter(moment(this.state.endDate))) {
+            Alert.alert("Error", "End time for event should be after start time")
+        }
+
+        this.setState({
+            showStart: false,
+            displayStart: time,
+            displayEnd: "ERROR"
+        })
     }
 
     updateEndTime = (event, selectedTime) => {
         if (event.type == 'dismissed' || selectedTime == undefined){
             return
-        } else if (moment(this.state.startDate).isSameOrAfter(moment(selectedTime))) {
-            Alert.alert("Error", "End time for event should be after start time")
-            return
-        }
-        try {
-            let hour = selectedTime.getHours()
-            let mins = selectedTime.getMinutes()
-            
-            this.state.endDate.setHours(hour)
-            this.state.endDate.setMinutes(mins)
-            this.state.endTime.setHours(hour)
-            this.state.endTime.setMinutes(mins)
+        } 
 
+        let hour = selectedTime.getHours()
+        let mins = selectedTime.getMinutes()
+        
+        this.state.endDate.setHours(hour)
+        this.state.endDate.setMinutes(mins)
+        this.state.endTime.setHours(hour)
+        this.state.endTime.setMinutes(mins)
+        
+        if (moment(this.state.startDate).isSameOrAfter(moment(this.state.endDate))) {
+            Alert.alert("Error", "End time for event should be after start time")
+            this.setState({
+                showEnd: false,
+                displayEnd: "ERROR"
+            })
+            return
+        } else {
             var strHour = new String(hour)
             var strMin = new String(mins)
 
@@ -201,11 +217,12 @@ export default class UpdateModule extends Component{
                 showEnd: false,
                 displayEnd: time,
             })
-        }catch (err) {console.log(err)}
+        }
     }
 
     
     render(){
+        console.log(this.state.day)
         return (
             <KeyboardAwareScrollView
                 style = {{flex: 1, paddingBottom: 10, paddingTop: 10,backgroundColor:colours.lightblue,padding:15}}
@@ -336,7 +353,26 @@ export default class UpdateModule extends Component{
                                 color={colours.darkblue}
                                 title="Update Event"
                                 onPress={() => {
-                                    Dashboard.updateInfo(this.state)
+                                    if (this.state.displayEnd == "ERROR") {
+                                        Alert.alert("Error", "Please fill in a valid End Time")
+                                        return
+                                    }
+                                    var newStartTime = genTimeBlock(this.state.day, this.state.startTime.getHours(), this.state.startTime.getMinutes())
+                                    var newEndTime = genTimeBlock(this.state.day, this.state.endTime.getHours(), this.state.endTime.getMinutes())
+                                    Dashboard.updateInfo({
+                                        module: this.state.module,
+                                        title: this.state.title,
+                                        eventTitle: this.state.eventTitle,
+                                        extra_description: this.state.extra_description,
+                                        location: this.state.location,
+                                        
+                                        startTime: newStartTime,
+                                        endTime: newEndTime,
+
+                                        startDate : this.state.startDate,
+                                        endDate: this.state.endDate,
+                                        day : this.state.day,
+                                    })
                                     this.reset()
                                 }}
                             />
@@ -346,7 +382,10 @@ export default class UpdateModule extends Component{
                                 color={colours.darkblue}
                                 title="Delete"
                                 onPress={() => {
-                                    Dashboard.deleteModalModule(this.state)
+                                    Dashboard.deleteModalModule({
+                                        module: this.state.module,
+                                        title: this.state.title,
+                                    })
                                     this.reset()
                                 }}
                             />
