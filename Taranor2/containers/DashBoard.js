@@ -109,7 +109,7 @@ export default class Dashboard extends Component {
       showDropDown: false,
       modalModule: {},
       currentDate: new moment().startOf('isoWeek').day(0),
-      week: new moment().week()        
+      week: new moment().week(),    
     }
     addToEventList = addToEventList.bind(this)
     deleteModalModule = deleteModalModule.bind(this)
@@ -367,6 +367,21 @@ export default class Dashboard extends Component {
               }
               onPress = {this.toggleView}
               />
+                <Button
+                type = 'clear'
+                containerStyle = {functionBar.buttonContainer}
+                onPress = {() => {
+                  auth().signOut()
+                  Alert.alert("Confirmation required", 'Do you really want to logout?',
+                  [{text: 'Yes', onPress: () => this.props.navigation.navigate('SignIn')},{text: 'No'}],
+                  {cancelable: false})
+                }}
+                icon = {<Octicons
+                name = 'sign-out'
+                color = {'white'}
+                size = {20}
+                />}
+                />
         </SafeAreaView>
     )
   }

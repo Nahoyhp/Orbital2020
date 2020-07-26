@@ -47,18 +47,40 @@ class addModuleList extends Component{
         })
     }
 
+    isModuleCode = (input) => {
+        var length = input.length
+        console.log(input)
+        var cutoff = 2
+        console.log(input.slice(0,3))
+        if (length < 6 || length > 8) {
+            return false
+        } else if (length == 7) {
+            // if an alphabet exists in third place
+           if(/^[a-zA-Z]+$/.test(input.charAt(2))){
+               cutoff = 3
+           } else {
+                return false
+           }
+        }
+        return /^[a-zA-Z]+$/.test(input.slice(0,cutoff)) && /^[0-9]+$/.test(input.slice(cutoff))
+    }
+
     handleCreateModules = () => {
         if (this.state.code == '' || this.state.name == '') {
             Alert.alert("Error!", "Course code and name is mandatory")
             return
         }
 
-        database.createModule({
-            code: this.state.code,
-            name: this.state.name,
-            description: this.state.description,
-            reset: this.reset
-        })
+        if (this.isModuleCode(this.state.code)) {
+            database.createModule({
+                code: this.state.code,
+                name: this.state.name,
+                description: this.state.description,
+                reset: this.reset
+            })
+        } else {
+            Alert.alert("Error", "Module Code must start with 2 or 3 letters follows by 4 digits")
+        }
     }
 
     render(){

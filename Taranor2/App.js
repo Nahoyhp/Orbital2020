@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {SafeAreaView} from 'react-native';
+import {SafeAreaView, Alert, NavigationActions} from 'react-native';
 import CreateModule from './components/CreateModule';
 import CreateGroup from './components/CreateGroup';
 
@@ -25,6 +25,11 @@ const Tab = createBottomTabNavigator();
 const StackTwo = createStackNavigator();
 
 const StackThree = createStackNavigator();
+
+function logOut() {
+  NavigationActions.navigate({routeName: 'SignIn'})
+  return null
+}
 
 function DashboardOverlay() {
  return (
@@ -62,6 +67,10 @@ function DashboardOverlay() {
       }
     />
   </StackTwo.Navigator>)
+}
+
+function empty() {
+  return null
 }
 
 

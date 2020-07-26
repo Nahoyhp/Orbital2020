@@ -189,7 +189,7 @@ export default class manageModule extends Component {
                 <View style = {{height: '75%', width: '90%', backgroundColor: 'white', alignSelf: 'center', padding: 12}}>
                     <Text style = {modalText.header}>Instruction to Add User to Manage Module</Text>
                     <Text style = {modalText.subheader}>Step 1: </Text>
-                    <Text style = {modalText.text}>Ask the intended User for his UID, which can be found under [Manage] > [Show Your UserID].</Text>
+                    <Text style = {modalText.text}>Ask the intended User for his UID, which can be found under [Manage] -- [Show Your UserID].</Text>
                     <Text style = {modalText.subheader}>Step 2: </Text>
                     <Text style = {modalText.text}>Paste the intended User's UID in the Text Input below [Enter the new User ID].</Text>
                     <Text style = {modalText.subheader}>Step 3: </Text>

@@ -43,12 +43,14 @@ export default class Login extends Component {
           isLoading: true,
         })
   
-        try {
+        try { 
           let response = await auth().signInWithEmailAndPassword(this.state.email, this.state.password)
           if (response && response.user) {
             await database.getModuleList()
+            console.log(1)
             await database.getStudentInfo()
             this.setState({isLoading: false})
+            console.log(2)
             this.props.navigation.navigate('Content')
           }
     
@@ -69,13 +71,13 @@ export default class Login extends Component {
     }
 
   render() {
-  if(this.state.isLoading){
-      return(
-        <View style={styles.preloader}>
-          <ActivityIndicator size={Platform.OS === 'ios'? 'large' : 50} color="white"/>
+    if(this.state.isLoading){
+      return (
+        <View style = {{flex: 1, justifyContent: 'center'}}>
+          <ActivityIndicator size="large" color={colours.lightblue} />
         </View>
       )
-    }    
+  }    
 
   return (
     <View style = {styles.container}>
